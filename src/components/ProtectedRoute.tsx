@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuthStore, AppRole } from '@/stores/authStore';
+import { useAuthStore, type AppRole } from '@/stores/authStore';
 
 interface ProtectedRouteProps {
   children: ReactNode;
