@@ -1,3 +1,31 @@
+/**
+ * useAuth
+ *
+ * Central authentication hook for LBD-SIP. Provides all auth operations:
+ * login, logout, MFA enroll/verify, recovery code usage, and password reset.
+ *
+ * Built on top of Supabase Auth (PKCE flow) and Zustand auth store.
+ *
+ * Rate limiting:
+ *   Client-side: 5 attempts per email, 15-minute lockout stored in sessionStorage.
+ *   Server-side: enforced via Supabase Auth settings + edge function.
+ *
+ * MFA flow:
+ *   1. login() → checks MFA enrollment
+ *   2. If enrolled → navigate to /auth/mfa-verify
+ *   3. If not enrolled (internal role) → navigate to /auth/mfa-setup
+ *   4. verifyMFA(code) or completeMFASetup(code, factorId, recoveryCodes)
+ *   5. On success → navigate to role dashboard
+ *
+ * Recovery codes:
+ *   Generated as random strings, SHA-256 hashed, stored as JSONB in
+ *   profiles.recovery_codes. Each code is single-use (invalidated on use).
+ *
+ * @example
+ * const { login, logout, mfaVerified, isLoading } = useAuth();
+ * await login(email, password);   // throws on failure
+ * await logout('user');           // clears session + navigates to /login
+ */
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';

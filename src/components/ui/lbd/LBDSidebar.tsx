@@ -1,10 +1,27 @@
+/**
+ * LBDSidebar
+ *
+ * The persistent navigation sidebar for LBD-SIP. Renders role-specific navigation
+ * groups with dynamic engagement-scoped module links.
+ *
+ * Architecture:
+ *   - `roleNav` maps each AppRole to an array of NavGroup definitions.
+ *   - Module links (under /engagements/:id/*) are computed at render time by
+ *     `getModuleHref(path, engagementId)`. If no engagement is selected the
+ *     resulting href is `null` which renders a disabled, non-navigable item.
+ *   - Collapse state (60px ↔ 220px) is stored in localStorage.
+ *
+ * Disabled state:
+ *   When engagementId is null, module-level items are rendered with
+ *   `opacity-50 pointer-events-none cursor-not-allowed` and a tooltip
+ *   prompting the user to select an engagement.
+ */
+
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
-  Building2,
   Briefcase,
-  Radio,
   Network,
   Eye,
   Telescope,
@@ -13,23 +30,28 @@ import {
   Megaphone,
   AlertTriangle,
   BarChart3,
-  ClipboardList,
   Settings,
   Users,
   Calendar,
   CheckSquare,
-  TrendingUp,
   BookOpen,
-  Newspaper,
   ChevronLeft,
   ChevronRight,
   LogOut,
   Shield,
+  Radio,
+  Globe,
+  Palette,
+  ClipboardList,
+  Key,
+  PlugZap,
+  TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
 import { useAuth } from '@/hooks/useAuth';
 import type { AppRole } from '@/stores/authStore';
+import { useEngagementSafe } from '@/contexts/EngagementContext';
 
 /* ─────────────────────────────────────────────
    Nav item definition
@@ -37,7 +59,14 @@ import type { AppRole } from '@/stores/authStore';
 
 interface NavItem {
   label: string;
-  href: string;
+  /** Static href (always navigable) */
+  href?: string;
+  /**
+   * Module path under /engagements/:id/ (requires active engagement).
+   * When set, the rendered href becomes `/engagements/${engagementId}/${modulePath}`.
+   * If no engagement is selected, the item is disabled.
+   */
+  modulePath?: string;
   Icon: React.ElementType;
   badge?: string;
 }
@@ -48,44 +77,61 @@ interface NavGroup {
 }
 
 /* ─────────────────────────────────────────────
+   Helpers
+───────────────────────────────────────────── */
+
+/**
+ * Builds the full href for a module item.
+ * Returns null when no engagement is selected (item will be disabled).
+ */
+function getModuleHref(modulePath: string, engagementId: string | null): string | null {
+  if (!engagementId) return null;
+  return `/engagements/${engagementId}/${modulePath}`;
+}
+
+/* ─────────────────────────────────────────────
    Role → nav config
+   All internal module items use `modulePath` so they are
+   dynamically scoped to the active engagement.
 ───────────────────────────────────────────── */
 
 const roleNav: Record<AppRole, NavGroup[]> = {
   super_admin: [
     {
       items: [
-        { label: 'Dashboard',  href: '/admin/dashboard',  Icon: LayoutDashboard },
-        { label: 'Clients',    href: '/admin/clients',    Icon: Building2 },
-        { label: 'Engagements',href: '/admin/engagements',Icon: Briefcase },
+        { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
+        { label: 'Engagements', href: '/engagements', Icon: Briefcase },
       ],
     },
     {
       group: 'INTELLIGENCE',
       items: [
-        { label: 'Intel Feed',    href: '/admin/intel',        Icon: Radio },
-        { label: 'Stakeholders',  href: '/admin/stakeholders',  Icon: Network },
-        { label: 'Competitors',   href: '/admin/competitors',   Icon: Eye },
-        { label: 'Scenarios',     href: '/admin/scenarios',     Icon: Telescope },
-        { label: 'Sentiment',     href: '/admin/sentiment',     Icon: TrendingUp },
+        { label: 'Power Map',      modulePath: 'power-map',     Icon: Network },
+        { label: 'Intel Tracker',  modulePath: 'intel-tracker', Icon: Radio },
+        { label: 'Competitors',    modulePath: 'competitors',   Icon: Eye },
+        { label: 'Geospatial',     modulePath: 'geospatial',    Icon: Globe },
+        { label: 'Scenarios',      modulePath: 'scenarios',     Icon: Telescope },
       ],
     },
     {
       group: 'STRATEGY',
       items: [
-        { label: 'Narrative',      href: '/admin/narrative', Icon: Target },
-        { label: 'Audience Matrix',href: '/admin/audience',  Icon: Users },
-        { label: 'Comms',          href: '/admin/comms',     Icon: Megaphone },
-        { label: 'Content',        href: '/admin/content',   Icon: FileText },
-        { label: 'Crisis',         href: '/admin/crisis',    Icon: AlertTriangle },
+        { label: 'Narrative',       modulePath: 'narrative',       Icon: Target },
+        { label: 'Brand Audit',     modulePath: 'brand-audit',     Icon: Palette },
+        { label: 'Comms Planner',   modulePath: 'comms-planner',   Icon: Megaphone },
+        { label: 'Content Calendar',modulePath: 'content-calendar',Icon: Calendar },
+        { label: 'Crisis Comms',    modulePath: 'crisis',          Icon: AlertTriangle },
+        { label: 'Cadence',         modulePath: 'cadence',         Icon: CheckSquare },
+        { label: 'Reports',         modulePath: 'reports',         Icon: BarChart3 },
       ],
     },
     {
       group: 'PLATFORM',
       items: [
-        { label: 'Analytics',  href: '/admin/analytics', Icon: BarChart3 },
-        { label: 'Audit Log',  href: '/admin/audit',     Icon: ClipboardList },
-        { label: 'Settings',   href: '/admin/settings',  Icon: Settings },
+        { label: 'Admin',         href: '/admin',               Icon: Settings },
+        { label: 'Users',         href: '/admin/users',         Icon: Users },
+        { label: 'Portal Access', href: '/admin/portal-access', Icon: Key },
+        { label: 'Integrations',  href: '/admin/integrations',  Icon: PlugZap },
       ],
     },
   ],
@@ -93,27 +139,29 @@ const roleNav: Record<AppRole, NavGroup[]> = {
   lead_advisor: [
     {
       items: [
-        { label: 'Dashboard',   href: '/advisor/dashboard',   Icon: LayoutDashboard },
-        { label: 'Clients',     href: '/advisor/clients',     Icon: Building2 },
-        { label: 'Engagements', href: '/advisor/engagements', Icon: Briefcase },
+        { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
+        { label: 'Engagements', href: '/engagements', Icon: Briefcase },
       ],
     },
     {
       group: 'INTELLIGENCE',
       items: [
-        { label: 'Intel Feed',   href: '/advisor/intel',       Icon: Radio },
-        { label: 'Stakeholders', href: '/advisor/stakeholders', Icon: Network },
-        { label: 'Scenarios',    href: '/advisor/scenarios',    Icon: Telescope },
-        { label: 'Sentiment',    href: '/advisor/sentiment',    Icon: TrendingUp },
+        { label: 'Power Map',     modulePath: 'power-map',     Icon: Network },
+        { label: 'Intel Tracker', modulePath: 'intel-tracker', Icon: Radio },
+        { label: 'Competitors',   modulePath: 'competitors',   Icon: Eye },
+        { label: 'Geospatial',    modulePath: 'geospatial',    Icon: Globe },
+        { label: 'Scenarios',     modulePath: 'scenarios',     Icon: Telescope },
       ],
     },
     {
       group: 'STRATEGY',
       items: [
-        { label: 'Narrative', href: '/advisor/narrative', Icon: Target },
-        { label: 'Comms',     href: '/advisor/comms',     Icon: Megaphone },
-        { label: 'Content',   href: '/advisor/content',   Icon: FileText },
-        { label: 'Crisis',    href: '/advisor/crisis',    Icon: AlertTriangle },
+        { label: 'Narrative',     modulePath: 'narrative',     Icon: Target },
+        { label: 'Brand Audit',   modulePath: 'brand-audit',   Icon: Palette },
+        { label: 'Comms Planner', modulePath: 'comms-planner', Icon: Megaphone },
+        { label: 'Crisis Comms',  modulePath: 'crisis',        Icon: AlertTriangle },
+        { label: 'Cadence',       modulePath: 'cadence',       Icon: CheckSquare },
+        { label: 'Reports',       modulePath: 'reports',       Icon: BarChart3 },
       ],
     },
   ],
@@ -121,23 +169,28 @@ const roleNav: Record<AppRole, NavGroup[]> = {
   senior_advisor: [
     {
       items: [
-        { label: 'Dashboard',   href: '/senior/dashboard',   Icon: LayoutDashboard },
-        { label: 'Engagements', href: '/senior/engagements', Icon: Briefcase },
+        { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
+        { label: 'Engagements', href: '/engagements', Icon: Briefcase },
       ],
     },
     {
       group: 'INTELLIGENCE',
       items: [
-        { label: 'Intel Feed',   href: '/senior/intel',       Icon: Radio },
-        { label: 'Stakeholders', href: '/senior/stakeholders', Icon: Network },
-        { label: 'Scenarios',    href: '/senior/scenarios',    Icon: Telescope },
+        { label: 'Power Map',     modulePath: 'power-map',     Icon: Network },
+        { label: 'Intel Tracker', modulePath: 'intel-tracker', Icon: Radio },
+        { label: 'Competitors',   modulePath: 'competitors',   Icon: Eye },
+        { label: 'Geospatial',    modulePath: 'geospatial',    Icon: Globe },
+        { label: 'Scenarios',     modulePath: 'scenarios',     Icon: Telescope },
       ],
     },
     {
       group: 'STRATEGY',
       items: [
-        { label: 'Narrative', href: '/senior/narrative', Icon: Target },
-        { label: 'Content',   href: '/senior/content',   Icon: FileText },
+        { label: 'Narrative',     modulePath: 'narrative',     Icon: Target },
+        { label: 'Brand Audit',   modulePath: 'brand-audit',   Icon: Palette },
+        { label: 'Comms Planner', modulePath: 'comms-planner', Icon: Megaphone },
+        { label: 'Crisis Comms',  modulePath: 'crisis',        Icon: AlertTriangle },
+        { label: 'Reports',       modulePath: 'reports',       Icon: BarChart3 },
       ],
     },
   ],
@@ -145,23 +198,24 @@ const roleNav: Record<AppRole, NavGroup[]> = {
   comms_director: [
     {
       items: [
-        { label: 'Dashboard', href: '/comms/dashboard', Icon: LayoutDashboard },
+        { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
+        { label: 'Engagements', href: '/engagements', Icon: Briefcase },
       ],
     },
     {
       group: 'STRATEGY',
       items: [
-        { label: 'Narrative Platform', href: '/comms/narrative', Icon: Target },
-        { label: 'Audience Matrix',    href: '/comms/audience',  Icon: Users },
-        { label: 'Comms Initiatives',  href: '/comms/comms',     Icon: Megaphone },
+        { label: 'Narrative',     modulePath: 'narrative',     Icon: Target },
+        { label: 'Comms Planner', modulePath: 'comms-planner', Icon: Megaphone },
+        { label: 'Crisis Comms',  modulePath: 'crisis',        Icon: AlertTriangle },
+        { label: 'Reports',       modulePath: 'reports',       Icon: BarChart3 },
       ],
     },
     {
       group: 'EXECUTION',
       items: [
-        { label: 'Content Calendar', href: '/comms/content',   Icon: Calendar },
-        { label: 'Crisis Comms',     href: '/comms/crisis',    Icon: AlertTriangle },
-        { label: 'Intel Feed',       href: '/comms/intel',     Icon: Radio },
+        { label: 'Content Calendar', modulePath: 'content-calendar', Icon: Calendar },
+        { label: 'Intel Feed',        modulePath: 'intel-tracker',   Icon: Radio },
       ],
     },
   ],
@@ -169,18 +223,18 @@ const roleNav: Record<AppRole, NavGroup[]> = {
   intel_analyst: [
     {
       items: [
-        { label: 'Dashboard', href: '/intel/dashboard', Icon: LayoutDashboard },
+        { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
+        { label: 'Engagements', href: '/engagements', Icon: Briefcase },
       ],
     },
     {
       group: 'INTELLIGENCE',
       items: [
-        { label: 'Intel Feed',    href: '/intel/feed',         Icon: Radio },
-        { label: 'Stakeholders',  href: '/intel/stakeholders', Icon: Network },
-        { label: 'Competitors',   href: '/intel/competitors',  Icon: Eye },
-        { label: 'Scenarios',     href: '/intel/scenarios',    Icon: Telescope },
-        { label: 'Sentiment',     href: '/intel/sentiment',    Icon: TrendingUp },
-        { label: 'Urgent Flags',  href: '/intel/flags',        Icon: AlertTriangle, badge: '!' },
+        { label: 'Power Map',     modulePath: 'power-map',     Icon: Network },
+        { label: 'Intel Tracker', modulePath: 'intel-tracker', Icon: Radio, badge: '!' },
+        { label: 'Competitors',   modulePath: 'competitors',   Icon: Eye },
+        { label: 'Geospatial',    modulePath: 'geospatial',    Icon: Globe },
+        { label: 'Scenarios',     modulePath: 'scenarios',     Icon: Telescope },
       ],
     },
   ],
@@ -188,24 +242,24 @@ const roleNav: Record<AppRole, NavGroup[]> = {
   digital_strategist: [
     {
       items: [
-        { label: 'Dashboard', href: '/digital/dashboard', Icon: LayoutDashboard },
+        { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
+        { label: 'Engagements', href: '/engagements', Icon: Briefcase },
       ],
     },
     {
-      group: 'CONTENT',
+      group: 'EXECUTION',
       items: [
-        { label: 'Content Studio',   href: '/digital/content',  Icon: FileText },
-        { label: 'Comms Initiatives',href: '/digital/comms',    Icon: Megaphone },
-        { label: 'Approval Queue',   href: '/digital/approvals',Icon: CheckSquare },
-        { label: 'Published',        href: '/digital/published',Icon: Newspaper },
+        { label: 'Content Calendar', modulePath: 'content-calendar', Icon: Calendar },
+        { label: 'Comms Planner',    modulePath: 'comms-planner',    Icon: Megaphone },
+        { label: 'Intel Feed',       modulePath: 'intel-tracker',    Icon: Radio },
       ],
     },
     {
       group: 'REFERENCE',
       items: [
-        { label: 'Narrative Ref', href: '/digital/narrative', Icon: BookOpen },
-        { label: 'Intel Snapshot',href: '/digital/intel',     Icon: Radio },
-        { label: 'Metrics',       href: '/digital/metrics',   Icon: BarChart3 },
+        { label: 'Narrative Ref', modulePath: 'narrative', Icon: BookOpen },
+        { label: 'Brand Audit',   modulePath: 'brand-audit', Icon: Palette },
+        { label: 'Reports',       modulePath: 'reports',   Icon: TrendingUp },
       ],
     },
   ],
@@ -213,18 +267,9 @@ const roleNav: Record<AppRole, NavGroup[]> = {
   client_principal: [
     {
       items: [
-        { label: 'Dashboard', href: '/portal/dashboard', Icon: LayoutDashboard },
-      ],
-    },
-    {
-      group: 'ENGAGEMENT',
-      items: [
-        { label: 'Overview',           href: '/portal/overview',   Icon: Briefcase },
-        { label: 'Strategic Updates',  href: '/portal/updates',    Icon: BarChart3 },
-        { label: 'Narrative Summary',  href: '/portal/narrative',  Icon: Target },
-        { label: 'Published Content',  href: '/portal/content',    Icon: Newspaper },
-        { label: 'Touchpoints',        href: '/portal/touchpoints',Icon: Calendar },
-        { label: 'Documents',          href: '/portal/documents',  Icon: BookOpen },
+        { label: 'Dashboard', href: '/portal',          Icon: LayoutDashboard },
+        { label: 'Reports',   href: '/portal/reports',  Icon: BarChart3 },
+        { label: 'Insights',  href: '/portal/insights', Icon: FileText },
       ],
     },
   ],
@@ -258,10 +303,21 @@ interface LBDSidebarProps {
   className?: string;
 }
 
+/**
+ * LBDSidebar
+ *
+ * Renders the role-based navigation sidebar. Module items are dynamically
+ * linked to the active engagement via EngagementContext. Items without an
+ * active engagement are rendered as disabled links.
+ */
 export function LBDSidebar({ className }: LBDSidebarProps) {
   const { user, role } = useAuthStore();
   const { logout } = useAuth();
   const location = useLocation();
+
+  // useEngagementSafe returns null outside EngagementProvider (e.g. client portal)
+  const engagementCtx = useEngagementSafe();
+  const engagementId = engagementCtx?.selectedEngagement?.id ?? null;
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
@@ -330,14 +386,51 @@ export function LBDSidebar({ className }: LBDSidebarProps) {
 
             {/* Items */}
             {group.items.map((item) => {
+              // Resolve href — module items depend on engagement selection
+              const resolvedHref = item.href
+                ? item.href
+                : item.modulePath
+                  ? getModuleHref(item.modulePath, engagementId)
+                  : null;
+
+              const isDisabled = resolvedHref === null;
+
               const isActive =
-                location.pathname === item.href ||
-                (item.href !== '/' && location.pathname.startsWith(item.href + '/'));
+                !isDisabled && (
+                  location.pathname === resolvedHref ||
+                  (resolvedHref !== '/' && location.pathname.startsWith(resolvedHref + '/'))
+                );
+
+              const disabledTitle = 'Select an engagement to access this module';
+
+              if (isDisabled) {
+                return (
+                  <span
+                    key={item.modulePath}
+                    className={cn(
+                      'relative flex items-center gap-2.5 mx-2 rounded-lg text-sm',
+                      'opacity-40 cursor-not-allowed pointer-events-none',
+                      collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2',
+                      'text-muted-foreground',
+                    )}
+                    title={disabledTitle}
+                    aria-disabled="true"
+                  >
+                    <item.Icon
+                      className={cn('flex-none', collapsed ? 'w-4.5 h-4.5' : 'w-4 h-4')}
+                      aria-hidden="true"
+                    />
+                    {!collapsed && (
+                      <span className="truncate text-xs font-medium">{item.label}</span>
+                    )}
+                  </span>
+                );
+              }
 
               return (
                 <NavLink
-                  key={item.href}
-                  to={item.href}
+                  key={resolvedHref}
+                  to={resolvedHref}
                   className={cn(
                     'relative flex items-center gap-2.5 mx-2 rounded-lg text-sm transition-colors duration-150',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',

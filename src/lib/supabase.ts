@@ -2,15 +2,23 @@
 export { supabase } from '@/integrations/supabase/client';
 export type { Database } from '@/integrations/supabase/types';
 
-// Role → dashboard route mapping
+/**
+ * Role → dashboard route mapping.
+ *
+ * All internal staff land on the unified /dashboard route which renders
+ * role-appropriate content via DashboardRouter. Clients land on /portal.
+ *
+ * Legacy role-prefixed routes (/admin/*, /advisor/*, etc.) are kept as
+ * redirect aliases in App.tsx for backwards-compat with any bookmarks.
+ */
 export const ROLE_DASHBOARDS = {
-  super_admin:        '/admin/dashboard',
-  lead_advisor:       '/advisor/dashboard',
-  senior_advisor:     '/senior/dashboard',
-  comms_director:     '/comms/dashboard',
-  intel_analyst:      '/intel/dashboard',
-  digital_strategist: '/digital/dashboard',
-  client_principal:   '/portal/dashboard',
+  super_admin:        '/dashboard',
+  lead_advisor:       '/dashboard',
+  senior_advisor:     '/dashboard',
+  comms_director:     '/dashboard',
+  intel_analyst:      '/dashboard',
+  digital_strategist: '/dashboard',
+  client_principal:   '/portal',
 } as const;
 
 // Internal roles that MUST complete MFA before accessing the platform

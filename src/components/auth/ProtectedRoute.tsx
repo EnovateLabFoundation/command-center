@@ -1,15 +1,51 @@
-import { ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+/**
+ * ProtectedRoute
+ *
+ * Guards a route (or layout route) behind authentication + optional role
+ * and MFA checks.
+ *
+ * Supports two usage patterns:
+ *
+ * 1. **Wrapper pattern** (classic, wraps children directly):
+ *    ```tsx
+ *    <Route path="/admin" element={
+ *      <ProtectedRoute allowedRoles={['super_admin']}>
+ *        <AdminPage />
+ *      </ProtectedRoute>
+ *    } />
+ *    ```
+ *
+ * 2. **Layout route pattern** (no children — renders <Outlet /> instead):
+ *    ```tsx
+ *    <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
+ *      <Route path="/admin" element={<AdminPage />} />
+ *      <Route path="/admin/users" element={<UsersPage />} />
+ *    </Route>
+ *    ```
+ *
+ * @param children      - Child elements to render. If omitted, renders <Outlet />.
+ * @param allowedRoles  - Roles permitted to access this route. If omitted, any
+ *                        authenticated user is allowed.
+ * @param requireMfa    - If true (default), route also requires MFA verification
+ *                        (aal2 level). Set to false for client_principal routes.
+ */
+
+import { type ReactNode } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { ShieldX } from 'lucide-react';
 import { useAuthStore, type AppRole } from '@/stores/authStore';
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+  children?: ReactNode;
   /** If provided, user's role must be in this list — else 403 screen */
   allowedRoles?: AppRole[];
-  /** If true, route also requires MFA to be verified (aal2) */
+  /** If true, route also requires MFA to be verified (aal2) — default: true */
   requireMfa?: boolean;
 }
+
+/* ─────────────────────────────────────────────
+   Inner screens
+───────────────────────────────────────────── */
 
 function LoadingScreen() {
   return (
@@ -51,7 +87,7 @@ function ForbiddenScreen({ role }: { role: AppRole | null }) {
           Contact your administrator if you believe this is an error.
         </p>
         <a
-          href="/"
+          href="/dashboard"
           className="inline-block mt-6 px-4 py-2 bg-card border border-border rounded-lg text-sm text-foreground hover:border-accent transition-colors"
         >
           Return to Dashboard
@@ -60,6 +96,10 @@ function ForbiddenScreen({ role }: { role: AppRole | null }) {
     </div>
   );
 }
+
+/* ─────────────────────────────────────────────
+   Component
+───────────────────────────────────────────── */
 
 export default function ProtectedRoute({
   children,
@@ -85,6 +125,11 @@ export default function ProtectedRoute({
   // Role check
   if (allowedRoles && role && !allowedRoles.includes(role)) {
     return <ForbiddenScreen role={role} />;
+  }
+
+  // Layout route pattern: no children → render nested routes via Outlet
+  if (children === undefined) {
+    return <Outlet />;
   }
 
   return <>{children}</>;
