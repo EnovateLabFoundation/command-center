@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, RefreshCw } from 'lucide-react';
+import { Briefcase, RefreshCw, Plus } from 'lucide-react';
 import { useEngagement, type Engagement } from '@/contexts/EngagementContext';
 import {
   LBDPageHeader,
@@ -18,6 +18,7 @@ import {
   LBDLoadingSkeleton,
 } from '@/components/ui/lbd';
 import { cn } from '@/lib/utils';
+import NewEngagementModal from './NewEngagementModal';
 
 /* ─────────────────────────────────────────────
    Status filter options
@@ -57,6 +58,7 @@ export default function EngagementList() {
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
+  const [showNewModal, setShowNewModal] = useState(false);
 
   /* Derived filtered list */
   const filtered = engagements.filter((e) => {
@@ -77,14 +79,23 @@ export default function EngagementList() {
         title="Engagement Portfolio"
         description="All active and paused client engagements assigned to you."
         actions={
-          <button
-            onClick={() => refetch()}
-            aria-label="Refresh engagements"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:border-accent/30 transition-colors"
-          >
-            <RefreshCw className="w-3 h-3" aria-hidden="true" />
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => refetch()}
+              aria-label="Refresh engagements"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:border-accent/30 transition-colors"
+            >
+              <RefreshCw className="w-3 h-3" aria-hidden="true" />
+              Refresh
+            </button>
+            <button
+              onClick={() => setShowNewModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+              New Engagement
+            </button>
+          </div>
         }
       />
 
@@ -207,6 +218,16 @@ export default function EngagementList() {
           {filtered.length} engagement{filtered.length !== 1 ? 's' : ''}
         </p>
       )}
+
+      {/* New Engagement modal */}
+      <NewEngagementModal
+        open={showNewModal}
+        onClose={() => setShowNewModal(false)}
+        onCreated={(engagementId) => {
+          refetch();
+          navigate(`/engagements/${engagementId}`);
+        }}
+      />
     </div>
   );
 }

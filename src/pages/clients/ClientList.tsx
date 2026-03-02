@@ -7,9 +7,10 @@
  *
  * "New Client" button launches the 4-step qualification wizard.
  */
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
-import { UserPlus, Building2, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { UserPlus, Building2, CheckCircle2, XCircle, Clock, Briefcase } from 'lucide-react';
 import {
   LBDPageHeader,
   LBDCard,
@@ -23,6 +24,7 @@ import {
   CLIENT_TYPE_LABELS,
   type ClientRow,
 } from '@/hooks/useClients';
+import NewEngagementModal from '@/pages/engagements/NewEngagementModal';
 
 /* ─────────────────────────────────────────────
    Type display badge
@@ -72,9 +74,12 @@ function QualBadge({ status }: { status: string | null }) {
 
 /* ─────────────────────────────────────────────
    Column definitions
+   (actions column receives onCreateEngagement
+   via closure — built inside the component)
 ───────────────────────────────────────────── */
 
-const columns: ColumnDef<ClientRow>[] = [
+function buildColumns(onCreateEngagement: (clientId: string) => void): ColumnDef<ClientRow>[] {
+  return [
   {
     key: 'name',
     label: 'Client',
@@ -162,7 +167,31 @@ const columns: ColumnDef<ClientRow>[] = [
       }
     },
   },
+  {
+    key: 'id' as keyof ClientRow,
+    label: 'Actions',
+    sortable: false,
+    render: (_v, row) => {
+      if (row.qualification_status !== 'qualified') return null;
+      return (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCreateEngagement(row.id);
+          }}
+          title="Create engagement for this client"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-mono font-semibold bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+        >
+          <Briefcase className="w-3 h-3" aria-hidden="true" />
+          Engage
+        </button>
+      );
+    },
+  },
 ];
+}
+
 
 /* ─────────────────────────────────────────────
    Component
@@ -172,9 +201,13 @@ export default function ClientList() {
   const navigate = useNavigate();
   const { data: clients, isLoading } = useClientList();
 
+  const [engageClientId, setEngageClientId] = useState<string | null>(null);
+
   const qualifiedCount   = clients?.filter(c => c.qualification_status === 'qualified').length ?? 0;
   const pendingCount     = clients?.filter(c => !c.qualification_status || c.qualification_status === 'pending').length ?? 0;
   const flaggedCount     = clients?.filter(c => !c.conflict_check_passed).length ?? 0;
+
+  const columns = buildColumns((clientId) => setEngageClientId(clientId));
 
   return (
     <div className="p-6 max-w-[1400px] mx-auto space-y-6">
@@ -241,6 +274,17 @@ export default function ClientList() {
           />
         </LBDCard>
       )}
+
+      {/* Create Engagement modal — pre-filled with the selected qualified client */}
+      <NewEngagementModal
+        open={engageClientId !== null}
+        onClose={() => setEngageClientId(null)}
+        prefilledClientId={engageClientId ?? undefined}
+        onCreated={(engagementId) => {
+          setEngageClientId(null);
+          navigate(`/engagements/${engagementId}`);
+        }}
+      />
     </div>
   );
 }
