@@ -128,6 +128,7 @@ const roleNav: Record<AppRole, NavGroup[]> = {
     {
       group: 'PLATFORM',
       items: [
+        { label: 'Cmd Dashboard', href: '/admin/dashboard',     Icon: TrendingUp },
         { label: 'Admin',         href: '/admin',               Icon: Settings },
         { label: 'Users',         href: '/admin/users',         Icon: Users },
         { label: 'Portal Access', href: '/admin/portal-access', Icon: Key },

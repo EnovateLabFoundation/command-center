@@ -34,6 +34,7 @@
  *     /reports                → ReportsPage
  *   ADMIN SUBROUTES (super_admin only, nested ProtectedRoute)
  *     /admin                  → AdminPanelPage
+ *     /admin/dashboard        → AdminDashboard (command centre)
  *     /admin/users            → UserManagementPage
  *     /admin/portal-access    → PortalAccessPage
  *     /admin/integrations     → IntegrationsPage
@@ -91,6 +92,7 @@ import ReportsPage from '@/pages/engagements/modules/ReportsPage';
 
 // ── Admin pages ───────────────────────────────────────────────────────────────
 import AdminPanelPage from '@/pages/admin/AdminPanelPage';
+import AdminDashboard from '@/pages/admin/AdminDashboard';
 import UserManagementPage from '@/pages/admin/UserManagementPage';
 import PortalAccessPage from '@/pages/admin/PortalAccessPage';
 import IntegrationsPage from '@/pages/admin/IntegrationsPage';
@@ -154,7 +156,6 @@ export default function App() {
               <Route path="/" element={<Navigate to="/login" replace />} />
 
               {/* ── Legacy role-prefixed redirect aliases ────────────────── */}
-              <Route path="/admin/dashboard" element={<Navigate to="/dashboard" replace />} />
               <Route path="/advisor/*" element={<Navigate to="/dashboard" replace />} />
               <Route path="/senior/*" element={<Navigate to="/dashboard" replace />} />
               <Route path="/comms/*" element={<Navigate to="/dashboard" replace />} />
@@ -207,6 +208,7 @@ export default function App() {
                 {/* Admin section — nested ProtectedRoute for super_admin only */}
                 <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
                   <Route path="/admin"                   element={<AdminPanelPage />} />
+                  <Route path="/admin/dashboard"         element={<AdminDashboard />} />
                   <Route path="/admin/users"             element={<UserManagementPage />} />
                   <Route path="/admin/portal-access"     element={<PortalAccessPage />} />
                   <Route path="/admin/integrations"      element={<IntegrationsPage />} />
