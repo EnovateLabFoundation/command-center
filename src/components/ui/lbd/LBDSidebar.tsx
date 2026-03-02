@@ -46,6 +46,7 @@ import {
   Key,
   PlugZap,
   TrendingUp,
+  Users2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
@@ -101,6 +102,7 @@ const roleNav: Record<AppRole, NavGroup[]> = {
       items: [
         { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
         { label: 'Engagements', href: '/engagements', Icon: Briefcase },
+        { label: 'Clients',     href: '/clients',     Icon: Users2 },
       ],
     },
     {
@@ -142,6 +144,7 @@ const roleNav: Record<AppRole, NavGroup[]> = {
       items: [
         { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
         { label: 'Engagements', href: '/engagements', Icon: Briefcase },
+        { label: 'Clients',     href: '/clients',     Icon: Users2 },
       ],
     },
     {
@@ -172,6 +175,7 @@ const roleNav: Record<AppRole, NavGroup[]> = {
       items: [
         { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
         { label: 'Engagements', href: '/engagements', Icon: Briefcase },
+        { label: 'Clients',     href: '/clients',     Icon: Users2 },
       ],
     },
     {
@@ -201,6 +205,7 @@ const roleNav: Record<AppRole, NavGroup[]> = {
       items: [
         { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
         { label: 'Engagements', href: '/engagements', Icon: Briefcase },
+        { label: 'Clients',     href: '/clients',     Icon: Users2 },
       ],
     },
     {
@@ -226,6 +231,7 @@ const roleNav: Record<AppRole, NavGroup[]> = {
       items: [
         { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
         { label: 'Engagements', href: '/engagements', Icon: Briefcase },
+        { label: 'Clients',     href: '/clients',     Icon: Users2 },
       ],
     },
     {
@@ -245,6 +251,7 @@ const roleNav: Record<AppRole, NavGroup[]> = {
       items: [
         { label: 'Dashboard',   href: '/dashboard',   Icon: LayoutDashboard },
         { label: 'Engagements', href: '/engagements', Icon: Briefcase },
+        { label: 'Clients',     href: '/clients',     Icon: Users2 },
       ],
     },
     {

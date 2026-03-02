@@ -97,6 +97,10 @@ import UserManagementPage from '@/pages/admin/UserManagementPage';
 import PortalAccessPage from '@/pages/admin/PortalAccessPage';
 import IntegrationsPage from '@/pages/admin/IntegrationsPage';
 
+// ── Client management pages ───────────────────────────────────────────────────
+import ClientList      from '@/pages/clients/ClientList';
+import NewClientWizard from '@/pages/clients/NewClientWizard';
+
 // ── Client portal pages ───────────────────────────────────────────────────────
 import ClientDashboard from '@/pages/portal/ClientDashboard';
 import ClientReports from '@/pages/portal/ClientReports';
@@ -180,6 +184,10 @@ export default function App() {
               >
                 {/* Dashboard */}
                 <Route path="/dashboard" element={<DashboardRouter />} />
+
+                {/* Client management */}
+                <Route path="/clients"     element={<ClientList />} />
+                <Route path="/clients/new" element={<NewClientWizard />} />
 
                 {/* Engagement list */}
                 <Route path="/engagements" element={<EngagementList />} />
