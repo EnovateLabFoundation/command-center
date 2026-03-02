@@ -93,13 +93,13 @@ async function writeAuditLog(
   extra?: Record<string, unknown>,
 ) {
   try {
-    await supabase.from('audit_logs').insert({
+    await (supabase.from('audit_logs').insert as any)({
       user_id: userId,
       action,
       table_name: 'auth',
       record_id: null,
-      new_values: extra ? (extra as Record<string, unknown>) : null,
-    } as Parameters<typeof supabase.from<'audit_logs'>>[0] extends never ? never : never);
+      new_values: extra ?? null,
+    });
   } catch {
     // Non-blocking — audit failure must not block auth flow
   }
@@ -202,13 +202,13 @@ export function useAuth() {
       const { hasMfaEnrolled, isMfaVerified } = await getMfaStatus();
 
       // Audit success
-      await supabase.from('audit_logs').insert({
+      await (supabase.from('audit_logs').insert as any)({
         user_id: data.user.id,
-        action: 'login' as const,
+        action: 'login',
         table_name: 'auth',
         record_id: null,
         new_values: { method: 'email_password', mfa_required: mfaRequired },
-      } as never);
+      });
 
       // Determine next step
       if (mfaRequired && !hasMfaEnrolled) {
@@ -232,13 +232,13 @@ export function useAuth() {
     const userId = store.user?.id;
     if (userId) {
       try {
-        await supabase.from('audit_logs').insert({
+        await (supabase.from('audit_logs').insert as any)({
           user_id: userId,
-          action: 'logout' as const,
+          action: 'logout',
           table_name: 'auth',
           record_id: null,
           new_values: { reason },
-        } as never);
+        });
       } catch { /* non-blocking */ }
     }
     await supabase.auth.signOut();

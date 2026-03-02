@@ -7,9 +7,11 @@ interface Breadcrumb {
   href?: string;
 }
 
-interface LBDPageHeaderProps {
+export interface LBDPageHeaderProps {
   title: string;
   subtitle?: string;
+  /** Alias for subtitle — kept for backward compat */
+  description?: string;
   breadcrumbs?: Breadcrumb[];
   /** Action buttons rendered on the right */
   actions?: React.ReactNode;
@@ -25,6 +27,7 @@ interface LBDPageHeaderProps {
 export function LBDPageHeader({
   title,
   subtitle,
+  description,
   breadcrumbs,
   actions,
   tag,
@@ -33,6 +36,7 @@ export function LBDPageHeader({
   eyebrowColor = 'text-accent',
   divider = true,
 }: LBDPageHeaderProps) {
+  const resolvedSubtitle = subtitle ?? description;
   const hasBreadcrumbs = breadcrumbs && breadcrumbs.length > 0;
 
   return (
@@ -112,9 +116,9 @@ export function LBDPageHeader({
             </h1>
             {tag && <div className="flex-none">{tag}</div>}
           </div>
-          {subtitle && (
+          {resolvedSubtitle && (
             <p className="mt-1 text-sm text-muted-foreground leading-relaxed max-w-2xl">
-              {subtitle}
+              {resolvedSubtitle}
             </p>
           )}
         </div>

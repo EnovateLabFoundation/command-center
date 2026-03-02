@@ -79,33 +79,31 @@ export function NotificationPanel({ open, onClose }: NotificationPanelProps) {
         const now = new Date().toISOString();
         const in7Days = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-        const [intelRes, touchRes, actionRes] = await Promise.allSettled([
+        const [intelRes, touchRes] = await Promise.allSettled([
           supabase
             .from('intel_items')
-            .select('id, title, category, created_at')
+            .select('id, headline, narrative_theme, created_at')
             .eq('is_urgent', true)
             .order('created_at', { ascending: false })
             .limit(5),
           supabase
             .from('cadence_touchpoints')
-            .select('id, title, scheduled_date, touchpoint_type')
+            .select('id, touchpoint_type, scheduled_date, status')
             .gte('scheduled_date', now)
             .lte('scheduled_date', in7Days)
             .order('scheduled_date', { ascending: true })
             .limit(5),
-          supabase
-            .from('action_items')
-            .select('id, title, due_date, priority')
-            .lt('due_date', now)
-            .eq('status', 'open')
-            .order('due_date', { ascending: true })
-            .limit(5),
         ]);
 
+        const urgentIntel = (intelRes.status === 'fulfilled' ? (intelRes.value.data ?? []) : [])
+          .map((i: any) => ({ id: i.id, title: i.headline, category: i.narrative_theme ?? 'Intel', created_at: i.created_at }));
+        const touchpoints = (touchRes.status === 'fulfilled' ? (touchRes.value.data ?? []) : [])
+          .map((t: any) => ({ id: t.id, title: t.touchpoint_type?.replace(/_/g, ' ') ?? 'Touchpoint', scheduled_date: t.scheduled_date, touchpoint_type: t.touchpoint_type }));
+
         setData({
-          urgentIntel: intelRes.status === 'fulfilled' ? (intelRes.value.data ?? []) : [],
-          touchpoints: touchRes.status === 'fulfilled' ? (touchRes.value.data ?? []) : [],
-          overdueActions: actionRes.status === 'fulfilled' ? (actionRes.value.data ?? []) : [],
+          urgentIntel,
+          touchpoints,
+          overdueActions: [],
         });
         setHasFetched(true);
       } catch (err) {
@@ -319,9 +317,7 @@ function NotifItem({
       <div className="flex items-start justify-between gap-1">
         <p className="text-xs text-foreground leading-snug line-clamp-2">{title}</p>
         {badge && (
-          <LBDBadge variant="amber" size="sm" className="flex-none mt-0.5">
-            {badge}
-          </LBDBadge>
+          <LBDBadge variant="priority" value={badge} size="sm" className="flex-none mt-0.5" />
         )}
       </div>
       <p className="text-[10px] text-muted-foreground mt-0.5">{meta}</p>

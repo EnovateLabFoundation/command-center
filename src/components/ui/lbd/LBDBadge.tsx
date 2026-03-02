@@ -8,11 +8,12 @@ export type RAGStatus = 'red' | 'amber' | 'green';
 export type Priority = 'critical' | 'high' | 'medium' | 'low';
 export type AlignmentStatus = 'hostile' | 'neutral' | 'supportive' | 'champion';
 export type Phase = '1' | '2' | '3' | '4';
-export type BadgeVariant = 'rag' | 'priority' | 'alignment' | 'phase' | 'role' | 'status';
+export type BadgeVariant = 'rag' | 'priority' | 'alignment' | 'phase' | 'role' | 'status' | 'outline' | 'red' | 'amber' | 'green';
 
 interface LBDBadgeProps {
   variant: BadgeVariant;
-  value: string;
+  value?: string;
+  children?: React.ReactNode;
   className?: string;
   size?: 'sm' | 'md';
 }
@@ -93,7 +94,8 @@ const roleColors: Record<string, string> = {
    Component
 ───────────────────────────────────────────── */
 
-export function LBDBadge({ variant, value, className, size = 'md' }: LBDBadgeProps) {
+export function LBDBadge({ variant, value: valueProp, children, className, size = 'md' }: LBDBadgeProps) {
+  const value = valueProp ?? (typeof children === 'string' ? children : '');
   const normalized = value.toLowerCase().replace(/\s+/g, '_');
 
   const base = cn(
@@ -162,6 +164,28 @@ export function LBDBadge({ variant, value, className, size = 'md' }: LBDBadgePro
     return (
       <span className={cn(base, colorClass, className)} aria-label={`Role: ${value}`}>
         {value.replace(/_/g, ' ').toUpperCase()}
+      </span>
+    );
+  }
+
+  /* Shorthand RAG variants (red/amber/green passed directly as variant) */
+  if (variant === 'red' || variant === 'amber' || variant === 'green') {
+    const colorClass = ragColors[variant] ?? ragColors.amber;
+    const dotClass = ragDots[variant] ?? ragDots.amber;
+    const label = ragLabels[variant] ?? variant.toUpperCase();
+    return (
+      <span className={cn(base, colorClass, className)} aria-label={`Status: ${label}`}>
+        <span className={cn('w-1.5 h-1.5 rounded-full flex-none', dotClass)} />
+        {label}
+      </span>
+    );
+  }
+
+  /* Outline */
+  if (variant === 'outline') {
+    return (
+      <span className={cn(base, 'bg-transparent text-muted-foreground border-border', className)}>
+        {value.toUpperCase().replace(/_/g, ' ')}
       </span>
     );
   }

@@ -3,7 +3,7 @@ import { LBDLoadingSkeleton } from './LBDLoadingSkeleton';
 
 type Padding = 'none' | 'sm' | 'md' | 'lg';
 
-interface LBDCardProps {
+export interface LBDCardProps {
   children?: React.ReactNode;
   title?: string;
   subtitle?: string;
@@ -20,6 +20,9 @@ interface LBDCardProps {
   onClick?: () => void;
   /** Extra role/data attrs */
   role?: string;
+  tabIndex?: number;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  'aria-label'?: string;
 }
 
 const paddingMap: Record<Padding, string> = {
@@ -41,6 +44,9 @@ export function LBDCard({
   padding = 'md',
   onClick,
   role,
+  tabIndex,
+  onKeyDown,
+  'aria-label': ariaLabel,
 }: LBDCardProps) {
   if (loading) {
     return <LBDLoadingSkeleton variant="card" className={className} />;
@@ -63,8 +69,9 @@ export function LBDCard({
       )}
       onClick={onClick}
       role={role ?? (isInteractive ? 'button' : undefined)}
-      tabIndex={isInteractive ? 0 : undefined}
-      onKeyDown={isInteractive ? (e) => e.key === 'Enter' && onClick?.() : undefined}
+      tabIndex={tabIndex ?? (isInteractive ? 0 : undefined)}
+      onKeyDown={onKeyDown ?? (isInteractive ? (e) => e.key === 'Enter' && onClick?.() : undefined)}
+      aria-label={ariaLabel}
     >
       {/* Card header */}
       {hasHeader && (
