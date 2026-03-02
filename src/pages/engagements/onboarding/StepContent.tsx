@@ -11,7 +11,8 @@
  */
 
 import { useState, useCallback } from 'react';
-import { CheckCircle2, Loader2, Zap, FileText, Send, Upload, Calendar, Users, BarChart2, BookOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle2, Loader2, Zap, FileText, Send, Upload, Calendar, Users, BarChart2, BookOpen, ExternalLink, Lock } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
@@ -194,102 +195,84 @@ export function Step1Content({ stepState, detail }: StepContentProps) {
 
 /* ─────────────────────────────────────────────
    STEP 2 — Discovery Conversation
-   Discovery framework form → saves discovery brief.
+   Links to the full Discovery Session page.
+   Step is marked complete by DiscoverySession on lock.
 ───────────────────────────────────────────── */
 
-export function Step2Content({ stepState, updateStep, engagementId }: StepContentProps) {
-  const { user } = useAuthStore();
+export function Step2Content({ stepState, engagementId }: StepContentProps) {
+  const navigate   = useNavigate();
   const isComplete = stepState.status === 'complete';
 
   const saved = (stepState.data ?? {}) as Record<string, string>;
-
-  const [objectives, setObjectives]   = useState(saved.objectives   ?? '');
-  const [stakeholders, setStakeholders] = useState(saved.stakeholders ?? '');
-  const [challenges, setChallenges]   = useState(saved.challenges   ?? '');
-  const [insights, setInsights]       = useState(saved.insights     ?? '');
-  const [saving, setSaving]           = useState(false);
-
-  const canComplete = objectives.trim() && stakeholders.trim() && challenges.trim() && insights.trim();
-
-  const handleSave = useCallback(async () => {
-    setSaving(true);
-    try {
-      const data = { objectives, stakeholders, challenges, insights };
-      updateStep(2, 'in_progress', data);
-      toast.success('Draft saved', 'Discovery notes have been saved.');
-    } finally {
-      setSaving(false);
-    }
-  }, [objectives, stakeholders, challenges, insights, updateStep]);
-
-  const handleComplete = useCallback(async () => {
-    if (!canComplete) {
-      toast.error('Cannot complete', 'All four discovery fields are required.');
-      return;
-    }
-    setSaving(true);
-    try {
-      const data = { objectives, stakeholders, challenges, insights, completedBy: user?.id };
-      updateStep(2, 'complete', data);
-      toast.success('Step 2 complete', 'Discovery brief saved.');
-    } finally {
-      setSaving(false);
-    }
-  }, [canComplete, objectives, stakeholders, challenges, insights, user, updateStep, engagementId]);
 
   if (isComplete) {
     return (
       <div className="space-y-3">
         <CompleteBanner />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {[
-            { label: 'Strategic Objectives', value: saved.objectives },
-            { label: 'Key Stakeholders', value: saved.stakeholders },
-            { label: 'Core Challenges', value: saved.challenges },
-            { label: 'Initial Insights', value: saved.insights },
+            { label: 'Locked At',    value: saved.lockedAt    ? new Date(saved.lockedAt).toLocaleString('en-GB') : '—' },
+            { label: 'Session ID',   value: saved.discoverySessionId ? `…${saved.discoverySessionId.slice(-8)}` : '—' },
           ].map(({ label, value }) => (
             <div key={label} className="rounded-lg border border-border bg-background/50 p-3">
               <p className="text-[10px] font-mono text-muted-foreground/50 uppercase mb-1">{label}</p>
-              <p className="text-xs text-foreground whitespace-pre-wrap">{value || '—'}</p>
+              <p className="text-xs text-foreground font-mono">{value}</p>
             </div>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={() => navigate(`/engagements/${engagementId}/discovery`)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-muted-foreground hover:text-accent hover:border-accent/30 transition-colors"
+        >
+          <Lock className="w-3 h-3" aria-hidden="true" />
+          View Locked Session
+        </button>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <FieldLabel>Strategic Objectives *</FieldLabel>
-          <TextArea value={objectives} onChange={setObjectives} placeholder="What does the client want to achieve politically or legislatively?" rows={3} />
+      {/* Session info card */}
+      <div className="rounded-lg border border-accent/20 bg-accent/5 p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <FileText className="w-4 h-4 text-accent mt-0.5 flex-none" aria-hidden="true" />
+          <div>
+            <p className="text-xs font-semibold text-foreground">Confidential Discovery Session</p>
+            <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+              The discovery session is a structured 7-area intelligence framework capturing the
+              client's political context, objectives, threats, alliances, communications state,
+              institutional context, and non-negotiables.
+            </p>
+          </div>
         </div>
-        <div>
-          <FieldLabel>Key Stakeholders *</FieldLabel>
-          <TextArea value={stakeholders} onChange={setStakeholders} placeholder="Who are the critical influencers, allies, and adversaries?" rows={3} />
-        </div>
-        <div>
-          <FieldLabel>Core Challenges *</FieldLabel>
-          <TextArea value={challenges} onChange={setChallenges} placeholder="What obstacles, risks, or vulnerabilities face the client?" rows={3} />
-        </div>
-        <div>
-          <FieldLabel>Initial Insights *</FieldLabel>
-          <TextArea value={insights} onChange={setInsights} placeholder="Early observations, media perception, or contextual intelligence." rows={3} />
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: '7 Discovery Areas',        sub: 'Guided framework' },
+            { label: 'AI Summarisation',          sub: 'Per-area bullet synthesis' },
+            { label: 'Discovery Brief',           sub: 'Print-ready document' },
+          ].map(({ label, sub }) => (
+            <div key={label} className="rounded-lg border border-border bg-background/50 p-2.5">
+              <p className="text-xs font-medium text-foreground">{label}</p>
+              <p className="text-[10px] text-muted-foreground/50 mt-0.5">{sub}</p>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div className="flex items-center gap-3 pt-1">
-        <ActionButton onClick={handleSave} loading={saving} variant="outline">
-          Save Draft
-        </ActionButton>
-        <ActionButton onClick={handleComplete} loading={saving} disabled={!canComplete} variant="success">
-          <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
-          Mark Complete
-        </ActionButton>
-        {!canComplete && (
-          <p className="text-[10px] font-mono text-muted-foreground/50">All four fields required</p>
-        )}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => navigate(`/engagements/${engagementId}/discovery`)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 transition-colors"
+        >
+          <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+          Open Discovery Session
+        </button>
+        <p className="text-[10px] font-mono text-muted-foreground/50">
+          Complete all 7 areas and lock the session to mark this step complete.
+        </p>
       </div>
     </div>
   );

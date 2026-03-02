@@ -77,6 +77,7 @@ import EngagementWorkspace from '@/pages/engagements/EngagementWorkspace';
 
 // ── Module pages ──────────────────────────────────────────────────────────────
 import OnboardingPage from '@/pages/engagements/modules/OnboardingPage';
+import DiscoverySession from '@/pages/engagements/discovery/DiscoverySession';
 import PowerMapPage from '@/pages/engagements/modules/PowerMapPage';
 import IntelTrackerPage from '@/pages/engagements/modules/IntelTrackerPage';
 import CompetitorsPage from '@/pages/engagements/modules/CompetitorsPage';
@@ -191,6 +192,12 @@ export default function App() {
 
                 {/* Engagement list */}
                 <Route path="/engagements" element={<EngagementList />} />
+
+                {/* Discovery session — full-page, outside the workspace tab strip */}
+                <Route
+                  path="/engagements/:id/discovery"
+                  element={<DiscoverySession />}
+                />
 
                 {/* Engagement workspace — sets active engagement on mount */}
                 <Route path="/engagements/:id" element={<EngagementWorkspace />}>
