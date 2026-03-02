@@ -22,14 +22,8 @@ export const ROLE_DASHBOARDS = {
 } as const;
 
 // Internal roles that MUST complete MFA before accessing the platform
-export const MFA_REQUIRED_ROLES = [
-  'super_admin',
-  'lead_advisor',
-  'senior_advisor',
-  'comms_director',
-  'intel_analyst',
-  'digital_strategist',
-] as const;
+// MFA disabled for development/testing — no roles require MFA
+export const MFA_REQUIRED_ROLES = [] as const;
 
 export const SESSION_DURATION_MS    = 8 * 60 * 60 * 1000;   // 8 hours
 export const INACTIVITY_TIMEOUT_MS  = 30 * 60 * 1000;        // 30 minutes
