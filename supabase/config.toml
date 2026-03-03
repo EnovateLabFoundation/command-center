@@ -1,1 +1,52 @@
 project_id = "bsctcrsiqdsboxjtdjyu"
+
+[functions.generate-intel-brief]
+verify_jwt = false
+
+[functions.generate-discovery-brief]
+verify_jwt = false
+
+[functions.detect-scenario-triggers]
+verify_jwt = false
+
+[functions.check-narrative-compliance]
+verify_jwt = false
+
+[functions.sentiment-score]
+verify_jwt = false
+
+[functions.ai-summarise]
+verify_jwt = false
+
+[functions.sync-twitter]
+verify_jwt = false
+
+[functions.sync-twitter-competitors]
+verify_jwt = false
+
+[functions.sync-news]
+verify_jwt = false
+
+[functions.sync-meta]
+verify_jwt = false
+
+[functions.sync-google-trends]
+verify_jwt = false
+
+[functions.sync-inec]
+verify_jwt = false
+
+[functions.data-upload]
+verify_jwt = false
+
+[functions.cron-scheduler]
+verify_jwt = false
+
+[functions.discovery-summarise]
+verify_jwt = false
+
+[functions.login-rate-limit]
+verify_jwt = false
+
+[functions.seed-test-users]
+verify_jwt = false

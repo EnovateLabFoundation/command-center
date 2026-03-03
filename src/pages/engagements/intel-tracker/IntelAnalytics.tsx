@@ -12,7 +12,7 @@
  * Each chart has an "Export JPG" button via html2canvas.
  */
 
-import { useRef, useCallback, useMemo } from 'react';
+import { useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -22,6 +22,17 @@ import { Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { IntelItem } from '@/hooks/useIntelTracker';
 import { sentimentHex } from '@/hooks/useIntelTracker';
+
+/** Lazy-loaded AI brief panel to avoid bundle bloat */
+const IntelBriefPanelLazy = lazy(() => import('./IntelBriefPanel'));
+
+function IntelBriefPanelWrapper({ engagementId }: { engagementId: string }) {
+  return (
+    <Suspense fallback={null}>
+      <IntelBriefPanelLazy engagementId={engagementId} />
+    </Suspense>
+  );
+}
 
 /* ─────────────────────────────────────────────
    Chart theme constants
@@ -608,11 +619,19 @@ function VolumeComboChart({ items }: { items: IntelItem[] }) {
 
 interface IntelAnalyticsProps {
   items: IntelItem[];
+  engagementId?: string;
 }
 
-export default function IntelAnalytics({ items }: IntelAnalyticsProps) {
+export default function IntelAnalytics({ items, engagementId }: IntelAnalyticsProps) {
   return (
     <div className="space-y-4">
+      {/* AI Brief generator */}
+      {engagementId && (
+        <div className="flex justify-end">
+          <IntelBriefPanelWrapper engagementId={engagementId} />
+        </div>
+      )}
+
       {/* Row 1: Line + Heatmap */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <SentimentLineChart items={items} />
