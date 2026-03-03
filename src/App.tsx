@@ -104,9 +104,14 @@ import ClientList      from '@/pages/clients/ClientList';
 import NewClientWizard from '@/pages/clients/NewClientWizard';
 
 // ── Client portal pages ───────────────────────────────────────────────────────
+import PortalShell from '@/layouts/PortalShell';
 import ClientDashboard from '@/pages/portal/ClientDashboard';
 import ClientReports from '@/pages/portal/ClientReports';
 import ClientInsights from '@/pages/portal/ClientInsights';
+import PortalSentiment from '@/pages/portal/PortalSentiment';
+import PortalMedia from '@/pages/portal/PortalMedia';
+import PortalBrandScorecard from '@/pages/portal/PortalBrandScorecard';
+import PortalBriefings from '@/pages/portal/PortalBriefings';
 
 // ── Fallback pages ────────────────────────────────────────────────────────────
 import Unauthorized from '@/pages/Unauthorized';
@@ -234,9 +239,9 @@ export default function App() {
 
               {/* ── Client portal ──────────────────────────────────────── */}
               {/*
-               * Separate AppShell instance for client_principal.
-               * No EngagementProvider (clients access a curated view, not the
-               * full engagement workspace). MFA is optional.
+               * PortalShell provides a cleaner, client-facing layout with
+               * module-gated sidebar navigation. No EngagementProvider needed.
+               * MFA is optional for client_principal users.
                */}
               <Route
                 element={
@@ -244,13 +249,17 @@ export default function App() {
                     allowedRoles={['client_principal']}
                     requireMfa={false}
                   >
-                    <AppShell />
+                    <PortalShell />
                   </ProtectedRoute>
                 }
               >
-                <Route path="/portal"          element={<ClientDashboard />} />
-                <Route path="/portal/reports"  element={<ClientReports />} />
-                <Route path="/portal/insights" element={<ClientInsights />} />
+                <Route path="/portal"                    element={<ClientDashboard />} />
+                <Route path="/portal/reports"            element={<ClientReports />} />
+                <Route path="/portal/reports/briefings"  element={<PortalBriefings />} />
+                <Route path="/portal/insights"           element={<ClientInsights />} />
+                <Route path="/portal/insights/sentiment" element={<PortalSentiment />} />
+                <Route path="/portal/insights/media"     element={<PortalMedia />} />
+                <Route path="/portal/insights/brand"     element={<PortalBrandScorecard />} />
               </Route>
 
               {/* ── Fallback ────────────────────────────────────────────── */}

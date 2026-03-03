@@ -956,6 +956,7 @@ export type Database = {
           is_urgent: boolean
           narrative_theme: string | null
           platform: string | null
+          portal_approved: boolean
           raw_content: string | null
           reach_tier: number | null
           sentiment_score: number | null
@@ -979,6 +980,7 @@ export type Database = {
           is_urgent?: boolean
           narrative_theme?: string | null
           platform?: string | null
+          portal_approved?: boolean
           raw_content?: string | null
           reach_tier?: number | null
           sentiment_score?: number | null
@@ -1002,6 +1004,7 @@ export type Database = {
           is_urgent?: boolean
           narrative_theme?: string | null
           platform?: string | null
+          portal_approved?: boolean
           raw_content?: string | null
           reach_tier?: number | null
           sentiment_score?: number | null

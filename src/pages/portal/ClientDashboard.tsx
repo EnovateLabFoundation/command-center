@@ -1,63 +1,156 @@
 /**
- * ClientDashboard
+ * ClientDashboard (/portal)
  *
- * The primary landing page for client_principal users.
- * Shows engagement overview, recent updates, and quick access to reports.
+ * The primary landing page for client_principal users. Shows:
+ *   - Personalised greeting with client name + engagement title
+ *   - Current phase indicator (1–4)
+ *   - Last updated timestamp
+ *   - Quick stats: last sentiment score, last report date, next briefing
  */
 
-import { BarChart3, FileText } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BarChart3, Clock, TrendingUp, FileText, Calendar } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
-import { LBDPageHeader, LBDCard, LBDEmptyState } from '@/components/ui/lbd';
+import {
+  usePortalAccess,
+  usePortalEngagement,
+  usePortalClient,
+  usePortalIntel,
+  usePortalBriefs,
+} from '@/hooks/usePortalData';
+import { LBDCard, LBDEmptyState } from '@/components/ui/lbd';
+import { format } from 'date-fns';
+
+/* ─────────────────────────────────────────────
+   Phase descriptions
+───────────────────────────────────────────── */
+
+const PHASE_DESC: Record<string, string> = {
+  '1': 'Discovery & Intelligence Gathering',
+  '2': 'Strategy Development & Planning',
+  '3': 'Execution & Campaign Delivery',
+  '4': 'Review & Legacy Planning',
+};
+
+/* ─────────────────────────────────────────────
+   Component
+───────────────────────────────────────────── */
 
 export default function ClientDashboard() {
-  const navigate = useNavigate();
   const { user } = useAuthStore();
   const firstName = user?.full_name?.split(' ')[0] ?? 'there';
 
+  const { data: access } = usePortalAccess();
+  const { data: engagement, isLoading } = usePortalEngagement(access?.engagement_id);
+  const { data: client } = usePortalClient(engagement?.client_id);
+  const { data: intelItems } = usePortalIntel(access?.engagement_id);
+  const { data: briefs } = usePortalBriefs(access?.engagement_id);
+
+  // Quick stats derivation
+  const lastSentiment = intelItems?.[0]?.sentiment_score ?? null;
+  const lastBriefDate = briefs?.[0]?.generated_at ?? null;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-transparent border-t-accent" />
+      </div>
+    );
+  }
+
+  if (!engagement) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <LBDEmptyState
+          icon={<BarChart3 className="w-8 h-8" />}
+          title="No Active Engagement"
+          description="Your advisory team has not yet linked an engagement to your portal. Please contact your lead advisor."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <LBDPageHeader
-        eyebrow="CLIENT PORTAL"
-        title={`Welcome back, ${firstName}`}
-        description="Your strategic engagement overview — reports, insights, and programme updates."
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <LBDCard
-          className="p-5 cursor-pointer hover:border-accent/30 transition-colors group"
-          onClick={() => navigate('/portal/reports')}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && navigate('/portal/reports')}
-        >
-          <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-3 group-hover:border-accent/40 transition-colors">
-            <BarChart3 className="w-4.5 h-4.5 text-accent" aria-hidden="true" />
-          </div>
-          <p className="text-sm font-semibold text-foreground mb-1">Programme Reports</p>
-          <p className="text-xs text-muted-foreground">Status reports, milestones, and deliverable updates.</p>
-        </LBDCard>
-
-        <LBDCard
-          className="p-5 cursor-pointer hover:border-accent/30 transition-colors group"
-          onClick={() => navigate('/portal/insights')}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && navigate('/portal/insights')}
-        >
-          <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-3 group-hover:border-accent/40 transition-colors">
-            <FileText className="w-4.5 h-4.5 text-accent" aria-hidden="true" />
-          </div>
-          <p className="text-sm font-semibold text-foreground mb-1">Strategic Insights</p>
-          <p className="text-xs text-muted-foreground">Curated intelligence briefings and strategic analysis.</p>
-        </LBDCard>
+      {/* ── Greeting ──────────────────────────── */}
+      <div>
+        <p className="text-[10px] font-mono tracking-[0.3em] text-accent mb-1">
+          {client?.name?.toUpperCase() ?? 'CLIENT PORTAL'}
+        </p>
+        <h1 className="text-2xl font-bold text-foreground">
+          Welcome back, {firstName}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">{engagement.title}</p>
       </div>
 
-      <LBDEmptyState
-        icon={<BarChart3 className="w-8 h-8" />}
-        title="Engagement Updates Coming Soon"
-        description="Real-time programme status, key milestones, and advisor briefings will appear here."
-      />
+      {/* ── Phase indicator ───────────────────── */}
+      <LBDCard className="p-5">
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1">
+            {['1', '2', '3', '4'].map((p) => (
+              <div
+                key={p}
+                className={`w-10 h-2 rounded-full transition-colors ${
+                  Number(p) <= Number(engagement.phase)
+                    ? 'bg-accent'
+                    : 'bg-muted'
+                }`}
+              />
+            ))}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">
+              Phase {engagement.phase}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {PHASE_DESC[engagement.phase] ?? 'In progress'}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Clock className="w-3.5 h-3.5" />
+            <span className="text-[10px]">
+              Updated {format(new Date(engagement.updated_at), 'dd MMM yyyy')}
+            </span>
+          </div>
+        </div>
+      </LBDCard>
+
+      {/* ── Quick stats ──────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Latest sentiment */}
+        <LBDCard className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="w-4 h-4 text-accent" />
+            <span className="text-[10px] font-mono tracking-wider text-muted-foreground">SENTIMENT</span>
+          </div>
+          <p className="text-xl font-bold text-foreground">
+            {lastSentiment !== null ? (lastSentiment > 0 ? '+' : '') + lastSentiment.toFixed(1) : '—'}
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-1">Latest score</p>
+        </LBDCard>
+
+        {/* Last report */}
+        <LBDCard className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <FileText className="w-4 h-4 text-accent" />
+            <span className="text-[10px] font-mono tracking-wider text-muted-foreground">LAST REPORT</span>
+          </div>
+          <p className="text-xl font-bold text-foreground">
+            {lastBriefDate ? format(new Date(lastBriefDate), 'dd MMM') : '—'}
+          </p>
+          <p className="text-[10px] text-muted-foreground mt-1">Most recent briefing</p>
+        </LBDCard>
+
+        {/* Engagement status */}
+        <LBDCard className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar className="w-4 h-4 text-accent" />
+            <span className="text-[10px] font-mono tracking-wider text-muted-foreground">STATUS</span>
+          </div>
+          <p className="text-xl font-bold text-foreground capitalize">{engagement.status}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Engagement health</p>
+        </LBDCard>
+      </div>
     </div>
   );
 }
