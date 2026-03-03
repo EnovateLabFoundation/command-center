@@ -28,6 +28,7 @@ import AnalyticsSidebar from './AnalyticsSidebar';
 
 const KeywordManagerModal = lazy(() => import('./KeywordManagerModal'));
 const SocialIntelligenceDashboard = lazy(() => import('./SocialIntelligenceDashboard'));
+const GoogleTrendsChart = lazy(() => import('./GoogleTrendsChart'));
 
 interface MonitoringTabProps {
   engagementId: string;
@@ -182,6 +183,11 @@ export default function MonitoringTab({ engagementId, onLogToTracker }: Monitori
       {/* Social Intelligence Dashboard */}
       <Suspense fallback={<LBDLoadingSkeleton className="h-[280px] rounded-xl" />}>
         <SocialIntelligenceDashboard items={feedItems} />
+      </Suspense>
+
+      {/* Google Trends Chart */}
+      <Suspense fallback={<LBDLoadingSkeleton className="h-[300px] rounded-xl" />}>
+        <GoogleTrendsChart engagementId={engagementId} />
       </Suspense>
 
       {/* Main layout: Feed + Sidebar */}

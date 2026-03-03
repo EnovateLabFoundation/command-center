@@ -737,6 +737,122 @@ export type Database = {
           },
         ]
       }
+      geo_data: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          last_election_votes: number | null
+          lga: string | null
+          polling_unit_code: string | null
+          registered_voters: number | null
+          state: string
+          ward: string | null
+          winning_party: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_election_votes?: number | null
+          lga?: string | null
+          polling_unit_code?: string | null
+          registered_voters?: number | null
+          state: string
+          ward?: string | null
+          winning_party?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          last_election_votes?: number | null
+          lga?: string | null
+          polling_unit_code?: string | null
+          registered_voters?: number | null
+          state?: string
+          ward?: string | null
+          winning_party?: string | null
+        }
+        Relationships: []
+      }
+      geo_demographics: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          lga_name: string
+          literacy_rate: number | null
+          median_income: number | null
+          population_estimate: number | null
+          poverty_rate: number | null
+          state: string
+          urban_rural: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lga_name: string
+          literacy_rate?: number | null
+          median_income?: number | null
+          population_estimate?: number | null
+          poverty_rate?: number | null
+          state: string
+          urban_rural?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          lga_name?: string
+          literacy_rate?: number | null
+          median_income?: number | null
+          population_estimate?: number | null
+          poverty_rate?: number | null
+          state?: string
+          urban_rural?: string | null
+        }
+        Relationships: []
+      }
+      google_trends_data: {
+        Row: {
+          created_at: string
+          date: string
+          engagement_id: string
+          id: string
+          interest_score: number | null
+          keyword: string
+          region: string | null
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          engagement_id: string
+          id?: string
+          interest_score?: number | null
+          keyword: string
+          region?: string | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          engagement_id?: string
+          id?: string
+          interest_score?: number | null
+          keyword?: string
+          region?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_trends_data_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "engagements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integration_configs: {
         Row: {
           api_key_encrypted: string | null
