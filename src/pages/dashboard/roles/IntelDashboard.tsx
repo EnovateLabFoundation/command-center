@@ -296,9 +296,9 @@ export default function IntelDashboard() {
                     <SentimentPill score={item.sentiment_score} />
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    {item.reach_tier && (
-                      <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${reachBadgeClass(item.reach_tier)}`}>
-                        {item.reach_tier.replace('_', ' ').toUpperCase()}
+                    {item.reach_tier != null && (
+                      <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${reachBadgeClass(String(item.reach_tier))}`}>
+                        TIER {item.reach_tier}
                       </span>
                     )}
                     {item.platform && (

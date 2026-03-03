@@ -78,7 +78,8 @@ export function useDiscoverySession(engagementId: string | undefined) {
     staleTime: 10_000,
     queryFn: async () => {
       // Try to fetch existing session
-      const { data: existing, error: fetchErr } = await supabase
+      // discovery_sessions table may not exist yet in typed schema — cast to bypass
+      const { data: existing, error: fetchErr } = await (supabase as any)
         .from('discovery_sessions')
         .select('*')
         .eq('engagement_id', engagementId!)
@@ -88,7 +89,7 @@ export function useDiscoverySession(engagementId: string | undefined) {
 
       // If none exists, create a new one
       if (!existing) {
-        const { data: created, error: insertErr } = await supabase
+        const { data: created, error: insertErr } = await (supabase as any)
           .from('discovery_sessions')
           .insert({
             engagement_id: engagementId!,
@@ -143,7 +144,7 @@ export function useDiscoverySession(engagementId: string | undefined) {
   const saveMutation = useMutation({
     mutationFn: async (areas: AreasRecord) => {
       if (!engagementId || !session) return;
-      const { error: saveErr } = await supabase
+      const { error: saveErr } = await (supabase as any)
         .from('discovery_sessions')
         .update({
           areas,
@@ -226,7 +227,7 @@ export function useDiscoverySession(engagementId: string | undefined) {
     mutationFn: async () => {
       if (!engagementId || !session) return;
       // Save current areas first
-      await supabase
+      await (supabase as any)
         .from('discovery_sessions')
         .update({
           areas:     localAreas,

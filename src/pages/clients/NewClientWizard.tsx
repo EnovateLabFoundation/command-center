@@ -195,11 +195,7 @@ export default function NewClientWizard() {
   async function handleSubmit(data: ClientFormData) {
     const qualErrs = qualificationErrors(data);
     if (qualErrs.length > 0) {
-      toast({
-        type: 'error',
-        title: 'Qualification Incomplete',
-        message: qualErrs[0],
-      });
+      toast.error('Qualification Incomplete', qualErrs[0]);
       return;
     }
 
@@ -230,17 +226,13 @@ export default function NewClientWizard() {
         },
       });
 
-      toast({
-        type: 'success',
-        title: 'Client Created',
-        message: `${data.name} has been successfully qualified and added.`,
-      });
+      toast.success('Client Created', `${data.name} has been successfully qualified and added.`);
 
       // Navigate to engagement creation pre-loaded with this client
       navigate(`/engagements?new=1&clientId=${newClient.id}`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'An unexpected error occurred';
-      toast({ type: 'error', title: 'Creation Failed', message });
+      toast.error('Creation Failed', message);
     }
   }
 

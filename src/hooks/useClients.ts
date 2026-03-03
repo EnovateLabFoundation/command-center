@@ -243,7 +243,7 @@ export function useCreateClient() {
       if (clientError) throw clientError;
 
       // ── 3. Write audit log ──
-      await supabase.from('audit_logs').insert({
+      await (supabase.from('audit_logs').insert as any)({
         action:     'create',
         table_name: 'clients',
         record_id:  newClient.id,
@@ -275,7 +275,7 @@ export async function logConflictCheck(
   override: boolean,
   overrideNotes: string | null,
 ) {
-  await supabase.from('audit_logs').insert({
+  await (supabase.from('audit_logs').insert as any)({
     action:     'create',
     table_name: 'clients',
     record_id:  null,

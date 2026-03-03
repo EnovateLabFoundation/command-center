@@ -41,7 +41,7 @@ interface SortConfig {
   direction: 'asc' | 'desc';
 }
 
-interface LBDDataTableProps<T extends Record<string, unknown>> {
+export interface LBDDataTableProps<T extends Record<string, unknown>> {
   columns: ColumnDef<T>[];
   data: T[];
   /** Unique row key extractor */
@@ -50,8 +50,12 @@ interface LBDDataTableProps<T extends Record<string, unknown>> {
   loadingRows?: number;
   emptyTitle?: string;
   emptyDescription?: string;
+  /** Alias for emptyTitle */
+  emptyMessage?: string;
   emptyIcon?: ReactNode;
   enableSearch?: boolean;
+  /** Alias for enableSearch */
+  searchable?: boolean;
   searchPlaceholder?: string;
   enablePagination?: boolean;
   defaultPageSize?: number;
@@ -123,10 +127,12 @@ export function LBDDataTable<T extends Record<string, unknown>>({
   rowKey,
   isLoading = false,
   loadingRows = 6,
-  emptyTitle = 'No records found',
+  emptyTitle: emptyTitleProp,
   emptyDescription = 'There are no items to display.',
+  emptyMessage,
   emptyIcon,
-  enableSearch = true,
+  enableSearch: enableSearchProp,
+  searchable,
   searchPlaceholder = 'Search…',
   enablePagination = true,
   defaultPageSize = 10,
@@ -141,6 +147,8 @@ export function LBDDataTable<T extends Record<string, unknown>>({
   className,
   stickyHeader = false,
 }: LBDDataTableProps<T>) {
+  const enableSearch = enableSearchProp ?? searchable ?? true;
+  const emptyTitle = emptyTitleProp ?? emptyMessage ?? 'No records found';
   const [searchQuery, setSearchQuery]       = useState('');
   const [sortConfig, setSortConfig]         = useState<SortConfig | null>(null);
   const [currentPage, setCurrentPage]       = useState(1);

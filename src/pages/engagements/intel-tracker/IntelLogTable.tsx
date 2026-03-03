@@ -338,10 +338,10 @@ export default function IntelLogTable({
                 {/* Flags */}
                 <div className="flex items-center gap-1 justify-end">
                   {item.is_urgent && (
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-none" title="Urgent" />
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-none" aria-label="Urgent" />
                   )}
                   {item.is_escalated && (
-                    <Zap className="w-3.5 h-3.5 text-red-400 flex-none" title="Escalated" />
+                    <Zap className="w-3.5 h-3.5 text-red-400 flex-none" aria-label="Escalated" />
                   )}
                   {isExpanded
                     ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground/40 ml-1" />

@@ -162,18 +162,19 @@ export function useAddIntelItem(engagementId: string) {
 
   return useMutation({
     mutationFn: async (values: IntelUpdate & { headline: string }) => {
+      const insertPayload = {
+        ...values,
+        engagement_id: engagementId,
+        is_escalated:  false,
+        is_urgent:     values.is_urgent ?? false,
+        action_required: values.action_required ?? false,
+        date_logged:   values.date_logged ?? new Date().toISOString().slice(0, 10),
+        created_by:    user?.id ?? '',
+        updated_by:    user?.id ?? '',
+      };
       const { data, error } = await supabase
         .from('intel_items')
-        .insert({
-          ...values,
-          engagement_id: engagementId,
-          is_escalated:  false,
-          is_urgent:     values.is_urgent ?? false,
-          action_required: values.action_required ?? false,
-          date_logged:   values.date_logged ?? new Date().toISOString().slice(0, 10),
-          created_by:    user?.id ?? '',
-          updated_by:    user?.id ?? '',
-        })
+        .insert(insertPayload as any)
         .select()
         .single();
       if (error) throw new Error(error.message);
@@ -247,18 +248,22 @@ export function useEscalateItem(engagementId: string) {
       const targetUserId = eng?.lead_advisor_id ?? user?.id;
       if (!targetUserId) return;
 
-      // 3. Create notification record
-      await supabase.from('notifications').insert({
-        user_id:          targetUserId,
-        engagement_id:    engagementId,
-        title:            '⚡ Escalated Intel Item',
-        message:          `Item requiring urgent attention: "${headline}"`,
-        type:             'escalation',
-        is_read:          false,
-        related_record_id: itemId,
-        related_table:    'intel_items',
-        created_by:       user?.id,
-      });
+      // 3. Create notification record (notifications table may not exist yet — skip gracefully)
+      try {
+        await (supabase as any).from('notifications').insert({
+          user_id:          targetUserId,
+          engagement_id:    engagementId,
+          title:            '⚡ Escalated Intel Item',
+          message:          `Item requiring urgent attention: "${headline}"`,
+          type:             'escalation',
+          is_read:          false,
+          related_record_id: itemId,
+          related_table:    'intel_items',
+          created_by:       user?.id,
+        });
+      } catch {
+        console.warn('[useEscalateItem] notifications table not available');
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: intelKeys.all(engagementId) }),
   });
