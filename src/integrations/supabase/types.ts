@@ -106,6 +106,50 @@ export type Database = {
           },
         ]
       }
+      briefs: {
+        Row: {
+          content: Json
+          created_at: string
+          date_from: string | null
+          date_to: string | null
+          engagement_id: string
+          generated_at: string
+          generated_by: string
+          id: string
+          type: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          date_from?: string | null
+          date_to?: string | null
+          engagement_id: string
+          generated_at?: string
+          generated_by: string
+          id?: string
+          type?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          date_from?: string | null
+          date_to?: string | null
+          engagement_id?: string
+          generated_at?: string
+          generated_by?: string
+          id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefs_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "engagements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cadence_touchpoints: {
         Row: {
           action_items: Json | null
@@ -1169,6 +1213,58 @@ export type Database = {
           permissions?: Json
         }
         Relationships: []
+      }
+      scenario_alerts: {
+        Row: {
+          created_at: string
+          engagement_id: string
+          id: string
+          intel_item_id: string | null
+          is_dismissed: boolean
+          matched_keyword: string
+          scenario_id: string
+        }
+        Insert: {
+          created_at?: string
+          engagement_id: string
+          id?: string
+          intel_item_id?: string | null
+          is_dismissed?: boolean
+          matched_keyword: string
+          scenario_id: string
+        }
+        Update: {
+          created_at?: string
+          engagement_id?: string
+          id?: string
+          intel_item_id?: string | null
+          is_dismissed?: boolean
+          matched_keyword?: string
+          scenario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenario_alerts_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "engagements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenario_alerts_intel_item_id_fkey"
+            columns: ["intel_item_id"]
+            isOneToOne: false
+            referencedRelation: "intel_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scenario_alerts_scenario_id_fkey"
+            columns: ["scenario_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scenarios: {
         Row: {

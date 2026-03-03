@@ -65,9 +65,10 @@ Deno.serve(async (req: Request) => {
   if (!LOVABLE_API_KEY) return json({ error: "AI service not configured" }, 503);
 
   const systemPrompt = [
-    "You are a political intelligence sentiment analyst.",
-    `Analyse the following text (language: ${language}).`,
-    "Determine the sentiment score and the dominant narrative theme.",
+    "You are a political intelligence sentiment analyst specialising in Nigerian political discourse.",
+    `Analyse the following text. First detect the language (could be English, Hausa, Yoruba, Igbo, Nigerian Pidgin, or mixed).`,
+    "Then determine the sentiment score and the dominant narrative theme.",
+    "Account for cultural context and idiomatic expressions in the detected language.",
   ].join(" ");
 
   try {
@@ -104,8 +105,12 @@ Deno.serve(async (req: Request) => {
                     type: "number",
                     description: "Confidence level 0.0 to 1.0 in the assessment.",
                   },
+                  language_detected: {
+                    type: "string",
+                    description: "Detected language: 'english', 'hausa', 'yoruba', 'igbo', 'pidgin', or 'mixed'.",
+                  },
                 },
-                required: ["score", "theme", "confidence"],
+                required: ["score", "theme", "confidence", "language_detected"],
                 additionalProperties: false,
               },
             },
@@ -141,6 +146,7 @@ Deno.serve(async (req: Request) => {
       score: Math.max(-2, Math.min(2, Number(result.score) || 0)),
       theme: result.theme ?? "unclassified",
       confidence: Math.max(0, Math.min(1, Number(result.confidence) || 0.5)),
+      language_detected: result.language_detected ?? "english",
     });
   } catch (err) {
     console.error("[sentiment-score] Error:", err);

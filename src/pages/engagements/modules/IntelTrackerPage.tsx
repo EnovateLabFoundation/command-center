@@ -272,7 +272,7 @@ export default function IntelTrackerPage() {
       {/* ── Analytics tab ───────────────────────────────────────── */}
       {activeTab === 'analytics' && (
         <div className="mt-4">
-          <IntelAnalytics items={items} />
+          <IntelAnalytics items={items} engagementId={engagementId} />
         </div>
       )}
 
