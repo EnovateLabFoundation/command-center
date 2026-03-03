@@ -1087,6 +1087,75 @@ export type Database = {
           },
         ]
       }
+      stakeholder_interactions: {
+        Row: {
+          created_at: string
+          created_by: string
+          engagement_id: string
+          follow_up_due_date: string | null
+          follow_up_required: boolean
+          follow_up_status: string | null
+          id: string
+          interaction_date: string
+          interaction_type: string
+          led_by_id: string | null
+          notes: string | null
+          outcome: string | null
+          stakeholder_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          engagement_id: string
+          follow_up_due_date?: string | null
+          follow_up_required?: boolean
+          follow_up_status?: string | null
+          id?: string
+          interaction_date?: string
+          interaction_type?: string
+          led_by_id?: string | null
+          notes?: string | null
+          outcome?: string | null
+          stakeholder_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          engagement_id?: string
+          follow_up_due_date?: string | null
+          follow_up_required?: boolean
+          follow_up_status?: string | null
+          id?: string
+          interaction_date?: string
+          interaction_type?: string
+          led_by_id?: string | null
+          notes?: string | null
+          outcome?: string | null
+          stakeholder_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stakeholder_interactions_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "engagements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stakeholder_interactions_stakeholder_id_fkey"
+            columns: ["stakeholder_id"]
+            isOneToOne: false
+            referencedRelation: "stakeholders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stakeholders: {
         Row: {
           alignment: Database["public"]["Enums"]["stakeholder_alignment"] | null
