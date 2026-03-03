@@ -1,21 +1,48 @@
+/**
+ * NarrativePage
+ *
+ * Entry point for the Narrative Architecture Matrix module.
+ * Three tabs: Core Platform | Audience Matrix | Message Discipline.
+ */
+
 import { useParams } from 'react-router-dom';
-import { Target } from 'lucide-react';
-import { LBDPageHeader, LBDEmptyState } from '@/components/ui/lbd';
+import { LBDPageHeader } from '@/components/ui/lbd';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+
+import CorePlatformTab from '@/pages/engagements/narrative/CorePlatformTab';
+import AudienceMatrixTab from '@/pages/engagements/narrative/AudienceMatrixTab';
+import MessageDisciplineTab from '@/pages/engagements/narrative/MessageDisciplineTab';
 
 export default function NarrativePage() {
   const { id } = useParams<{ id: string }>();
+
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6">
       <LBDPageHeader
         eyebrow="STRATEGY"
-        title="Narrative Platform"
-        description="Master narrative, key messages, and audience-specific messaging frameworks."
+        title="Narrative Architecture"
+        description="Master narrative, audience messaging matrix, and message discipline rules."
       />
-      <LBDEmptyState
-        icon={<Target className="w-8 h-8" />}
-        title="Narrative Module"
-        description="Narrative architecture, message hierarchy, and audience targeting tools coming soon."
-      />
+
+      <Tabs defaultValue="core" className="w-full">
+        <TabsList>
+          <TabsTrigger value="core">Core Platform</TabsTrigger>
+          <TabsTrigger value="audience">Audience Matrix</TabsTrigger>
+          <TabsTrigger value="discipline">Message Discipline</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="core">
+          <CorePlatformTab />
+        </TabsContent>
+
+        <TabsContent value="audience">
+          <AudienceMatrixTab />
+        </TabsContent>
+
+        <TabsContent value="discipline">
+          <MessageDisciplineTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
