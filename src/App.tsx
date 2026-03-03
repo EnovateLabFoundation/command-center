@@ -97,6 +97,7 @@ import AdminDashboard from '@/pages/admin/AdminDashboard';
 import UserManagementPage from '@/pages/admin/UserManagementPage';
 import PortalAccessPage from '@/pages/admin/PortalAccessPage';
 import IntegrationsPage from '@/pages/admin/IntegrationsPage';
+import AuditLogPage from '@/pages/admin/AuditLogPage';
 
 // ── Client management pages ───────────────────────────────────────────────────
 import ClientList      from '@/pages/clients/ClientList';
@@ -227,6 +228,7 @@ export default function App() {
                   <Route path="/admin/users"             element={<UserManagementPage />} />
                   <Route path="/admin/portal-access"     element={<PortalAccessPage />} />
                   <Route path="/admin/integrations"      element={<IntegrationsPage />} />
+                  <Route path="/admin/audit"             element={<AuditLogPage />} />
                 </Route>
               </Route>
 
