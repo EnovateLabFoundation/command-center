@@ -14,6 +14,7 @@ import { useState, useMemo } from 'react';
 import {
   PlugZap, Settings2, RefreshCw, TestTube, Clock, CheckCircle2,
   XCircle, AlertTriangle, WifiOff, Eye, EyeOff, Save, Loader2,
+  Upload, FileSpreadsheet,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 
@@ -29,6 +30,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 import {
   useIntegrations,
@@ -364,7 +368,123 @@ function SyncLogsPanel({
   );
 }
 
-/* ── Main Page Component ────────────────────────────────────────────────────── */
+/* ── Data Upload Panel ──────────────────────────────────────────────────────── */
+
+/**
+ * DataUploadPanel — allows super_admin to upload CSV for INEC/NBS data.
+ * Sends CSV content to data-upload Edge Function for parsing and bulk insert.
+ */
+function DataUploadPanel() {
+  const { toast: showToast } = useToast();
+  const [dataType, setDataType] = useState('election_results');
+  const [csvContent, setCsvContent] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [result, setResult] = useState<{
+    rows_parsed?: number; rows_inserted?: number;
+    rows_skipped?: number; validation_errors?: string[];
+  } | null>(null);
+
+  const DATA_TYPES = [
+    { value: 'election_results', label: 'Election Results', icon: '🗳️' },
+    { value: 'voter_registration', label: 'Voter Registration', icon: '📋' },
+    { value: 'nbs_demographics', label: 'NBS Demographics', icon: '📊' },
+    { value: 'polling_data', label: 'Polling Data', icon: '📍' },
+  ];
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.csv')) {
+      showToast({ title: 'Only CSV files are supported', variant: 'destructive' });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => { setCsvContent(ev.target?.result as string ?? ''); setResult(null); };
+    reader.readAsText(file);
+  };
+
+  const handleUpload = async () => {
+    if (!csvContent.trim()) { showToast({ title: 'No CSV content', variant: 'destructive' }); return; }
+    setIsUploading(true); setResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('data-upload', {
+        body: { data_type: dataType, csv_content: csvContent },
+      });
+      if (error) throw error;
+      setResult(data);
+      showToast({ title: 'Upload complete', description: `${data.rows_inserted} rows inserted, ${data.rows_skipped} skipped.` });
+    } catch (err: any) {
+      showToast({ title: 'Upload failed', description: err.message, variant: 'destructive' });
+    } finally { setIsUploading(false); }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle className="text-sm flex items-center gap-2">
+            <FileSpreadsheet className="w-4 h-4" /> Upload Data File (CSV)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Data Type</Label>
+            <Select value={dataType} onValueChange={setDataType}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {DATA_TYPES.map((dt) => (
+                  <SelectItem key={dt.value} value={dt.value}>{dt.icon} {dt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>CSV File</Label>
+            <Input type="file" accept=".csv" onChange={handleFileChange} />
+          </div>
+          {csvContent && (
+            <div className="space-y-2">
+              <Label>Preview (first 500 chars)</Label>
+              <Textarea value={csvContent.slice(0, 500) + (csvContent.length > 500 ? '...' : '')} readOnly className="h-24 text-xs font-mono" />
+              <p className="text-xs text-muted-foreground">{csvContent.split('\n').length - 1} data rows detected</p>
+            </div>
+          )}
+          <Button onClick={handleUpload} disabled={isUploading || !csvContent} className="w-full">
+            {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+            Upload &amp; Import
+          </Button>
+          {result && (
+            <Card className="bg-muted/30 border-border/30">
+              <CardContent className="pt-4 space-y-2">
+                <p className="text-sm font-semibold">Import Summary</p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div><p className="text-lg font-bold">{result.rows_parsed ?? 0}</p><p className="text-xs text-muted-foreground">Parsed</p></div>
+                  <div><p className="text-lg font-bold text-emerald-400">{result.rows_inserted ?? 0}</p><p className="text-xs text-muted-foreground">Inserted</p></div>
+                  <div><p className="text-lg font-bold text-amber-400">{result.rows_skipped ?? 0}</p><p className="text-xs text-muted-foreground">Skipped</p></div>
+                </div>
+                {result.validation_errors && result.validation_errors.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs font-medium text-red-400">Errors:</p>
+                    <ul className="text-xs text-muted-foreground list-disc pl-4">
+                      {result.validation_errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+          <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-border/30">
+            <p className="font-medium">Expected CSV columns by data type:</p>
+            <p><strong>Election Results / Voter Registration / Polling:</strong> state, lga, ward, polling_unit_code, registered_voters, last_election_votes, winning_party</p>
+            <p><strong>NBS Demographics:</strong> lga_name, state, population_estimate, median_income, poverty_rate, literacy_rate, urban_rural</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+
 
 export default function IntegrationsPage() {
   const {
@@ -425,11 +545,12 @@ export default function IntegrationsPage() {
         </Card>
       </div>
 
-      {/* Tabs: Platforms | Sync Logs */}
+      {/* Tabs: Platforms | Sync Logs | Upload Data */}
       <Tabs defaultValue="platforms">
         <TabsList>
           <TabsTrigger value="platforms">Platforms</TabsTrigger>
           <TabsTrigger value="logs">Sync Logs</TabsTrigger>
+          <TabsTrigger value="upload">Upload Data</TabsTrigger>
         </TabsList>
 
         {/* ── Platforms grid ── */}
@@ -460,6 +581,11 @@ export default function IntegrationsPage() {
         {/* ── Sync Logs ── */}
         <TabsContent value="logs" className="mt-4">
           <SyncLogsPanel logs={syncLogs} isLoading={isLoadingSyncLogs} />
+        </TabsContent>
+
+        {/* ── Upload Data ── */}
+        <TabsContent value="upload" className="mt-4">
+          <DataUploadPanel />
         </TabsContent>
       </Tabs>
 

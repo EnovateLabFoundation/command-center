@@ -89,8 +89,8 @@ export const PLATFORMS: PlatformDefinition[] = [
     key: 'serpapi',
     name: 'Google Search (SerpAPI)',
     icon: '🔍',
-    description: 'Monitor Google search results and SERP features.',
-    syncFunction: null,
+    description: 'Monitor Google search results, SERP features, and Google Trends.',
+    syncFunction: 'sync-google-trends',
     configFields: [
       { key: 'search_engine', label: 'Search Engine', type: 'select', options: ['google', 'bing', 'yahoo'] },
     ],
@@ -99,19 +99,20 @@ export const PLATFORMS: PlatformDefinition[] = [
     key: 'google_trends',
     name: 'Google Trends',
     icon: '📈',
-    description: 'Track trending search topics and interest over time.',
-    syncFunction: null,
+    description: 'Track trending search topics and interest over time via SerpAPI.',
+    syncFunction: 'sync-google-trends',
     configFields: [],
   },
   {
     key: 'newsapi',
     name: 'News API',
     icon: '📰',
-    description: 'Aggregate news articles from 80,000+ sources.',
+    description: 'Aggregate Nigerian and international news with source-tier ranking.',
     syncFunction: 'sync-news',
     configFields: [
       { key: 'language', label: 'Language', type: 'select', options: ['en', 'fr', 'de', 'es', 'pt'] },
       { key: 'country', label: 'Country Code', type: 'text', placeholder: 'e.g. ng, us, gb' },
+      { key: 'domains', label: 'Domains (comma-separated)', type: 'text', placeholder: 'premiumtimesng.com,punchng.com' },
     ],
   },
   {
@@ -139,7 +140,7 @@ export const PLATFORMS: PlatformDefinition[] = [
     name: 'INEC Data (Web Scraper)',
     icon: '🗳️',
     description: 'Scrape electoral data from the INEC website.',
-    syncFunction: null,
+    syncFunction: 'sync-inec',
     configFields: [
       { key: 'scrape_url', label: 'Base URL', type: 'text', placeholder: 'https://www.inecnigeria.org' },
     ],
