@@ -1243,6 +1243,66 @@ export type Database = {
           },
         ]
       }
+      sync_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duration_ms: number | null
+          engagement_id: string | null
+          error_message: string | null
+          id: string
+          integration_id: string | null
+          platform_name: string
+          records_ingested: number | null
+          status: string
+          triggered_at: string
+          triggered_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          engagement_id?: string | null
+          error_message?: string | null
+          id?: string
+          integration_id?: string | null
+          platform_name: string
+          records_ingested?: number | null
+          status?: string
+          triggered_at?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          engagement_id?: string | null
+          error_message?: string | null
+          id?: string
+          integration_id?: string | null
+          platform_name?: string
+          records_ingested?: number | null
+          status?: string
+          triggered_at?: string
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_logs_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "engagements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sync_logs_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integration_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           granted_at: string
