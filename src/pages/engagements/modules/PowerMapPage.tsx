@@ -15,7 +15,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Network, UserPlus, Download,
-  Table, Map as MapIcon, Loader2,
+  Table, Map as MapIcon, Loader2, HeartHandshake,
 } from 'lucide-react';
 import { LBDPageHeader } from '@/components/ui/lbd';
 import { toast } from '@/components/ui/lbd';
@@ -32,16 +32,18 @@ import AnalyticsCards from '@/pages/engagements/power-map/AnalyticsCards';
 import RegistryView   from '@/pages/engagements/power-map/RegistryView';
 import NetworkMap     from '@/pages/engagements/power-map/NetworkMap';
 import StakeholderDrawer from '@/pages/engagements/power-map/StakeholderDrawer';
+import StakeholderEngagementTracker from '@/pages/engagements/power-map/StakeholderEngagementTracker';
 
 /* ─────────────────────────────────────────────
    Sub-tab definitions
 ───────────────────────────────────────────── */
 
-type TabId = 'registry' | 'network';
+type TabId = 'registry' | 'network' | 'engagement';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
-  { id: 'registry', label: 'Registry View',         icon: Table   },
-  { id: 'network',  label: 'Network Visualisation', icon: MapIcon },
+  { id: 'registry',   label: 'Registry View',         icon: Table          },
+  { id: 'network',    label: 'Network Visualisation',  icon: MapIcon        },
+  { id: 'engagement', label: 'Engagement Tracker',     icon: HeartHandshake },
 ];
 
 /* ─────────────────────────────────────────────
@@ -235,6 +237,12 @@ export default function PowerMapPage() {
             stakeholders={stakeholders}
             mapRef={mapRef}
             graphRef={graphRef}
+          />
+        )}
+        {activeTab === 'engagement' && (
+          <StakeholderEngagementTracker
+            stakeholders={stakeholders}
+            isLoadingStakeholders={isLoading}
           />
         )}
       </div>
