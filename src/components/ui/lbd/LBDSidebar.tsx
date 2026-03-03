@@ -125,6 +125,13 @@ const roleNav: Record<AppRole, NavGroup[]> = {
         { label: 'Crisis Comms',    modulePath: 'crisis',          Icon: AlertTriangle },
         { label: 'Cadence',         modulePath: 'cadence',         Icon: CheckSquare },
         { label: 'Reports',         modulePath: 'reports',         Icon: BarChart3 },
+        { label: 'Close-Out',       modulePath: 'close-out',       Icon: CheckSquare },
+      ],
+    },
+    {
+      group: 'REFERENCE',
+      items: [
+        { label: 'Knowledge Base',  href: '/knowledge-base',       Icon: BookOpen },
       ],
     },
     {
@@ -166,6 +173,12 @@ const roleNav: Record<AppRole, NavGroup[]> = {
         { label: 'Crisis Comms',  modulePath: 'crisis',        Icon: AlertTriangle },
         { label: 'Cadence',       modulePath: 'cadence',       Icon: CheckSquare },
         { label: 'Reports',       modulePath: 'reports',       Icon: BarChart3 },
+      ],
+    },
+    {
+      group: 'REFERENCE',
+      items: [
+        { label: 'Knowledge Base', href: '/knowledge-base', Icon: BookOpen },
       ],
     },
   ],

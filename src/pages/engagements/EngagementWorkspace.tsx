@@ -28,6 +28,7 @@ import {
   CheckSquare,
   BarChart3,
   ClipboardList,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEngagement } from '@/contexts/EngagementContext';
@@ -65,6 +66,7 @@ const moduleTabs: ModuleTab[] = [
   { path: 'crisis',          label: 'Crisis',       Icon: AlertTriangle, roles: ['super_admin','lead_advisor','senior_advisor','comms_director'] },
   { path: 'cadence',         label: 'Cadence',      Icon: CheckSquare,   roles: ['super_admin','lead_advisor'] },
   { path: 'reports',         label: 'Reports',      Icon: BarChart3,     roles: ALL_INTERNAL },
+  { path: 'close-out',       label: 'Close-Out',    Icon: LogOut,        roles: ['super_admin','lead_advisor'] },
 ];
 
 /* ─────────────────────────────────────────────
