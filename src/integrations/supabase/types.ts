@@ -1196,6 +1196,53 @@ export type Database = {
           },
         ]
       }
+      reports: {
+        Row: {
+          created_at: string
+          engagement_id: string
+          file_path: string | null
+          id: string
+          is_public: boolean
+          metadata: Json | null
+          published_at: string
+          published_by: string
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          engagement_id: string
+          file_path?: string | null
+          id?: string
+          is_public?: boolean
+          metadata?: Json | null
+          published_at?: string
+          published_by: string
+          title: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          engagement_id?: string
+          file_path?: string | null
+          id?: string
+          is_public?: boolean
+          metadata?: Json | null
+          published_at?: string
+          published_by?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "engagements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roles: {
         Row: {
           created_at: string
