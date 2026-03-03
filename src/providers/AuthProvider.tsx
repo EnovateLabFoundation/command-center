@@ -74,7 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     init();
 
     // ── Auth state changes (sign-in, sign-out, token refresh) ─────────────
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // IMPORTANT: Do NOT await async calls inside onAuthStateChange to avoid
+    // deadlocks. Login flow is handled by useAuth.login(). This listener
+    // only handles sign-out and token refresh (fire-and-forget profile reload).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
 
       if (event === 'SIGNED_OUT') {
@@ -83,10 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
-        await loadProfile(session.user.id);
-        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-        store.setMfaVerified(aal?.currentLevel === 'aal2');
+      // For TOKEN_REFRESHED, reload profile in background (fire-and-forget)
+      // SIGNED_IN is handled by useAuth.login() — skip to avoid race condition
+      if (event === 'TOKEN_REFRESHED' && session?.user) {
+        loadProfile(session.user.id).catch(() => {});
       }
     });
 
