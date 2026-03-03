@@ -723,6 +723,10 @@ export type Database = {
         Row: {
           billing_status: string | null
           client_id: string
+          close_out_commentary: string | null
+          close_out_status: string | null
+          closed_at: string | null
+          closed_by: string | null
           created_at: string
           created_by: string
           end_date: string | null
@@ -730,7 +734,11 @@ export type Database = {
           health_rag: Database["public"]["Enums"]["health_rag"] | null
           id: string
           lead_advisor_id: string | null
+          lessons_learned: Json | null
           phase: Database["public"]["Enums"]["engagement_phase"]
+          re_engagement_date: string | null
+          relationship_notes: string | null
+          relationship_status: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["engagement_status"]
           title: string
@@ -740,6 +748,10 @@ export type Database = {
         Insert: {
           billing_status?: string | null
           client_id: string
+          close_out_commentary?: string | null
+          close_out_status?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
           created_at?: string
           created_by: string
           end_date?: string | null
@@ -747,7 +759,11 @@ export type Database = {
           health_rag?: Database["public"]["Enums"]["health_rag"] | null
           id?: string
           lead_advisor_id?: string | null
+          lessons_learned?: Json | null
           phase?: Database["public"]["Enums"]["engagement_phase"]
+          re_engagement_date?: string | null
+          relationship_notes?: string | null
+          relationship_status?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["engagement_status"]
           title: string
@@ -757,6 +773,10 @@ export type Database = {
         Update: {
           billing_status?: string | null
           client_id?: string
+          close_out_commentary?: string | null
+          close_out_status?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
           created_at?: string
           created_by?: string
           end_date?: string | null
@@ -764,7 +784,11 @@ export type Database = {
           health_rag?: Database["public"]["Enums"]["health_rag"] | null
           id?: string
           lead_advisor_id?: string | null
+          lessons_learned?: Json | null
           phase?: Database["public"]["Enums"]["engagement_phase"]
+          re_engagement_date?: string | null
+          relationship_notes?: string | null
+          relationship_status?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["engagement_status"]
           title?: string
@@ -1018,6 +1042,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "intel_items_engagement_id_fkey"
+            columns: ["engagement_id"]
+            isOneToOne: false
+            referencedRelation: "engagements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_base: {
+        Row: {
+          category: string
+          client_type: string | null
+          content: string | null
+          created_at: string
+          created_by: string
+          engagement_id: string | null
+          engagement_type: string | null
+          id: string
+          search_vector: unknown
+          tags: string[] | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category?: string
+          client_type?: string | null
+          content?: string | null
+          created_at?: string
+          created_by: string
+          engagement_id?: string | null
+          engagement_type?: string | null
+          id?: string
+          search_vector?: unknown
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          client_type?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string
+          engagement_id?: string | null
+          engagement_type?: string | null
+          id?: string
+          search_vector?: unknown
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_base_engagement_id_fkey"
             columns: ["engagement_id"]
             isOneToOne: false
             referencedRelation: "engagements"

@@ -90,6 +90,8 @@ import ContentCalendarPage from '@/pages/engagements/modules/ContentCalendarPage
 import CrisisPage from '@/pages/engagements/modules/CrisisPage';
 import CadencePage from '@/pages/engagements/modules/CadencePage';
 import ReportsPage from '@/pages/engagements/modules/ReportsPage';
+import CloseOutPage from '@/pages/engagements/modules/CloseOutPage';
+import KnowledgeBasePage from '@/pages/KnowledgeBasePage';
 
 // ── Admin pages ───────────────────────────────────────────────────────────────
 import AdminPanelPage from '@/pages/admin/AdminPanelPage';
@@ -224,7 +226,11 @@ export default function App() {
                   <Route path="crisis"           element={<CrisisPage />} />
                   <Route path="cadence"          element={<CadencePage />} />
                   <Route path="reports"          element={<ReportsPage />} />
+                  <Route path="close-out"        element={<CloseOutPage />} />
                 </Route>
+
+                {/* Knowledge Base — all internal roles */}
+                <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
 
                 {/* Admin section — nested ProtectedRoute for super_admin only */}
                 <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
