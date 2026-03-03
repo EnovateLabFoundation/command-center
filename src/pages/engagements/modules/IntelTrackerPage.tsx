@@ -12,7 +12,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  Plus, RefreshCw, List, BarChart2,
+  Plus, RefreshCw, List, BarChart2, Radio,
 } from 'lucide-react';
 import { LBDPageHeader } from '@/components/ui/lbd';
 import { toast } from '@/components/ui/lbd';
@@ -35,16 +35,18 @@ import IntelFilters, {
 import IntelLogTable  from '@/pages/engagements/intel-tracker/IntelLogTable';
 import IntelDrawer, { type IntelFormValues } from '@/pages/engagements/intel-tracker/IntelDrawer';
 import IntelAnalytics from '@/pages/engagements/intel-tracker/IntelAnalytics';
+import MonitoringTab from '@/pages/engagements/monitoring/MonitoringTab';
 
 /* ─────────────────────────────────────────────
    Tabs
 ───────────────────────────────────────────── */
 
-type TabId = 'log' | 'analytics';
+type TabId = 'log' | 'analytics' | 'monitoring';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
-  { id: 'log',       label: 'Intelligence Log', icon: List      },
-  { id: 'analytics', label: 'Analytics',         icon: BarChart2 },
+  { id: 'log',        label: 'Intelligence Log', icon: List      },
+  { id: 'analytics',  label: 'Analytics',         icon: BarChart2 },
+  { id: 'monitoring', label: 'Monitoring',         icon: Radio     },
 ];
 
 /* ─────────────────────────────────────────────
@@ -274,7 +276,18 @@ export default function IntelTrackerPage() {
         </div>
       )}
 
-      {/* ── Drawer ──────────────────────────────────────────────── */}
+      {/* ── Monitoring tab ──────────────────────────────────────── */}
+      {activeTab === 'monitoring' && engagementId && (
+        <MonitoringTab
+          engagementId={engagementId}
+          onLogToTracker={(item) => {
+            setEditTarget(item as any);
+            setDrawerOpen(true);
+          }}
+        />
+      )}
+
+
       <IntelDrawer
         open={drawerOpen}
         onClose={closeDrawer}
