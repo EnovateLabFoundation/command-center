@@ -27,6 +27,7 @@ import FeedCard from './FeedCard';
 import AnalyticsSidebar from './AnalyticsSidebar';
 
 const KeywordManagerModal = lazy(() => import('./KeywordManagerModal'));
+const SocialIntelligenceDashboard = lazy(() => import('./SocialIntelligenceDashboard'));
 
 interface MonitoringTabProps {
   engagementId: string;
@@ -177,6 +178,11 @@ export default function MonitoringTab({ engagementId, onLogToTracker }: Monitori
           Keywords
         </Button>
       </div>
+
+      {/* Social Intelligence Dashboard */}
+      <Suspense fallback={<LBDLoadingSkeleton className="h-[280px] rounded-xl" />}>
+        <SocialIntelligenceDashboard items={feedItems} />
+      </Suspense>
 
       {/* Main layout: Feed + Sidebar */}
       <div className="flex gap-4">
