@@ -6,7 +6,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Settings, Users, Key, PlugZap, ShieldCheck, BarChart3 } from 'lucide-react';
+import { Settings, Users, Key, PlugZap, ShieldCheck, BarChart3, ScrollText } from 'lucide-react';
 import { LBDPageHeader, LBDCard, LBDEmptyState } from '@/components/ui/lbd';
 
 const adminSections = [
@@ -21,6 +21,12 @@ const adminSections = [
     description: 'Grant and revoke client principal access to the portal.',
     href: '/admin/portal-access',
     Icon: Key,
+  },
+  {
+    label: 'Audit Log',
+    description: 'Review all platform activity, filter by user, action, and date range.',
+    href: '/admin/audit',
+    Icon: ScrollText,
   },
   {
     label: 'Integrations',
