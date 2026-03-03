@@ -15,6 +15,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createNotification } from '@/hooks/useNotifications';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import type { Database } from '@/integrations/supabase/types';
@@ -199,19 +200,15 @@ export function useTriggerScenario(engagementId: string) {
         .maybeSingle();
 
       if (eng?.lead_advisor_id) {
-        try {
-          await (supabase as any).from('notifications').insert({
-            user_id: eng.lead_advisor_id,
-            engagement_id: engagementId,
-            title: '🔴 Scenario Triggered',
-            message: `Scenario "${name}" has been triggered and requires immediate attention.`,
-            type: 'scenario_trigger',
-            is_read: false,
-            related_record_id: id,
-            related_table: 'scenarios',
-            created_by: user?.id,
-          });
-        } catch { /* notifications table may not exist yet */ }
+        await createNotification({
+          user_id:       eng.lead_advisor_id,
+          engagement_id: engagementId,
+          type:          'scenario',
+          title:         `Scenario Triggered: ${name}`,
+          body:          `Scenario "${name}" has been triggered and requires immediate attention.`,
+          link_to:       `/engagements/${engagementId}/scenarios`,
+          created_by:    user?.id,
+        });
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: scenarioKeys.all(engagementId) }),

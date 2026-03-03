@@ -44,6 +44,7 @@ export function useCompetitors(engagementId: string | undefined) {
     error,
   } = useQuery({
     queryKey: KEYS.list(engagementId ?? ''),
+    staleTime: 10 * 60 * 1000,  // 10 min — competitor data changes infrequently
     queryFn: async () => {
       if (!engagementId) return [];
       const { data, error } = await supabase

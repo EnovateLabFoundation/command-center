@@ -16,6 +16,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
+import { createNotification } from '@/hooks/useNotifications';
 
 /* ─────────────────────────────────────────────
    Enums & constants
@@ -178,6 +179,28 @@ export function useAddIntelItem(engagementId: string) {
         .select()
         .single();
       if (error) throw new Error(error.message);
+
+      // Notify lead_advisor on very negative sentiment (-2)
+      if (data && (data as any).sentiment_score <= -1.5) {
+        const { data: eng } = await supabase
+          .from('engagements')
+          .select('lead_advisor_id')
+          .eq('id', engagementId)
+          .maybeSingle();
+        const target = eng?.lead_advisor_id;
+        if (target) {
+          await createNotification({
+            user_id:       target,
+            engagement_id: engagementId,
+            type:          'sentiment',
+            title:         'Very Negative Sentiment Detected',
+            body:          `Intel item with sentiment score ≤-1.5: "${(data as any).headline}"`,
+            link_to:       `/engagements/${engagementId}/intel-tracker`,
+            created_by:    user?.id,
+          });
+        }
+      }
+
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: intelKeys.all(engagementId) }),
@@ -248,22 +271,16 @@ export function useEscalateItem(engagementId: string) {
       const targetUserId = eng?.lead_advisor_id ?? user?.id;
       if (!targetUserId) return;
 
-      // 3. Create notification record (notifications table may not exist yet — skip gracefully)
-      try {
-        await (supabase as any).from('notifications').insert({
-          user_id:          targetUserId,
-          engagement_id:    engagementId,
-          title:            '⚡ Escalated Intel Item',
-          message:          `Item requiring urgent attention: "${headline}"`,
-          type:             'escalation',
-          is_read:          false,
-          related_record_id: itemId,
-          related_table:    'intel_items',
-          created_by:       user?.id,
-        });
-      } catch {
-        console.warn('[useEscalateItem] notifications table not available');
-      }
+      // 3. Create notification record
+      await createNotification({
+        user_id:       targetUserId,
+        engagement_id: engagementId,
+        type:          'escalation',
+        title:         'Escalated Intel Item',
+        body:          `Item requiring urgent attention: "${headline}"`,
+        link_to:       `/engagements/${engagementId}/intel-tracker`,
+        created_by:    user?.id,
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: intelKeys.all(engagementId) }),
   });

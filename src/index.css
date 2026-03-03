@@ -112,3 +112,59 @@
     font-family: 'Source Code Pro', monospace;
   }
 }
+
+/* ── Mobile Responsiveness ──────────────────────────────────────────────────── */
+
+@layer utilities {
+
+  /* Dashboard stat grids: 1 col on mobile → 2 → 4 on desktop */
+  .lbd-stat-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4;
+  }
+
+  /* Two-column content areas: single column on mobile */
+  .lbd-two-col {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+  }
+
+  /* Three-column: 1 → 2 → 3 */
+  .lbd-three-col {
+    @apply grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4;
+  }
+
+  /* Table wrapper: always horizontally scrollable */
+  .lbd-table-scroll {
+    @apply overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
+  }
+
+  /* Full-width content padding: tighter on mobile */
+  .lbd-page-padding {
+    @apply p-3 sm:p-4 md:p-6;
+  }
+
+  /* Chart minimum height for readability on mobile */
+  .lbd-chart-min {
+    @apply min-h-[200px] sm:min-h-[280px];
+  }
+}
+
+/* War Room mobile: force single column on small screens */
+@media (max-width: 639px) {
+  .war-room-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  /* Ensure modals are full-screen on mobile */
+  [role="dialog"][data-mobile="true"] {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+}
+
+/* Content Security Policy meta-equivalent: applied via Vite config */
+

@@ -32,15 +32,18 @@
  *     /crisis                 → CrisisPage
  *     /cadence                → CadencePage
  *     /reports                → ReportsPage
+ *     /close-out              → CloseOutPage
+ *   /notifications            → NotificationsPage
  *   ADMIN SUBROUTES (super_admin only, nested ProtectedRoute)
  *     /admin                  → AdminPanelPage
  *     /admin/dashboard        → AdminDashboard (command centre)
  *     /admin/users            → UserManagementPage
  *     /admin/portal-access    → PortalAccessPage
  *     /admin/integrations     → IntegrationsPage
+ *     /admin/audit            → AuditLogPage
  *
  * CLIENT PORTAL  (client_principal, MFA optional)
- *   Layout: ProtectedRoute[client_principal] → AppShell (no EngagementProvider)
+ *   Layout: ProtectedRoute[client_principal] → PortalShell
  *   /portal                   → ClientDashboard
  *   /portal/reports           → ClientReports
  *   /portal/insights          → ClientInsights
@@ -50,6 +53,7 @@
  *   *                         → NotFound
  */
 
+import { lazy, Suspense } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -62,62 +66,72 @@ import { EngagementProvider } from '@/contexts/EngagementContext';
 import AppShell from '@/layouts/AppShell';
 import type { AppRole } from '@/stores/authStore';
 
-// ── Auth pages ────────────────────────────────────────────────────────────────
+// ── Loading skeleton for lazy pages ───────────────────────────────────────────
+import { LBDLoadingSkeleton } from '@/components/ui/lbd';
+
+function PageFallback() {
+  return (
+    <div className="p-6">
+      <LBDLoadingSkeleton />
+    </div>
+  );
+}
+
+// ── Auth pages (small, keep eager) ────────────────────────────────────────────
 import LoginPage from '@/pages/auth/LoginPage';
 import MFASetupPage from '@/pages/auth/MFASetupPage';
 import MFAVerifyPage from '@/pages/auth/MFAVerifyPage';
 import PasswordResetPage from '@/pages/auth/PasswordResetPage';
 
-// ── Internal shell ────────────────────────────────────────────────────────────
+// ── Shell layouts (eager — needed before any content renders) ─────────────────
 import DashboardRouter from '@/pages/dashboard/DashboardRouter';
-
-// ── Engagement pages ──────────────────────────────────────────────────────────
 import EngagementList from '@/pages/engagements/EngagementList';
 import EngagementWorkspace from '@/pages/engagements/EngagementWorkspace';
-
-// ── Module pages ──────────────────────────────────────────────────────────────
-import OnboardingPage from '@/pages/engagements/modules/OnboardingPage';
-import DiscoverySession from '@/pages/engagements/discovery/DiscoverySession';
-import PowerMapPage from '@/pages/engagements/modules/PowerMapPage';
-import IntelTrackerPage from '@/pages/engagements/modules/IntelTrackerPage';
-import CompetitorsPage from '@/pages/engagements/modules/CompetitorsPage';
-import GeospatialPage from '@/pages/engagements/modules/GeospatialPage';
-import NarrativePage from '@/pages/engagements/modules/NarrativePage';
-import ScenariosPage from '@/pages/engagements/modules/ScenariosPage';
-import BrandAuditPage from '@/pages/engagements/modules/BrandAuditPage';
-import CommsPlannerPage from '@/pages/engagements/modules/CommsPlannerPage';
-import ContentCalendarPage from '@/pages/engagements/modules/ContentCalendarPage';
-import CrisisPage from '@/pages/engagements/modules/CrisisPage';
-import CadencePage from '@/pages/engagements/modules/CadencePage';
-import ReportsPage from '@/pages/engagements/modules/ReportsPage';
-import CloseOutPage from '@/pages/engagements/modules/CloseOutPage';
-import KnowledgeBasePage from '@/pages/KnowledgeBasePage';
-
-// ── Admin pages ───────────────────────────────────────────────────────────────
-import AdminPanelPage from '@/pages/admin/AdminPanelPage';
-import AdminDashboard from '@/pages/admin/AdminDashboard';
-import UserManagementPage from '@/pages/admin/UserManagementPage';
-import PortalAccessPage from '@/pages/admin/PortalAccessPage';
-import IntegrationsPage from '@/pages/admin/IntegrationsPage';
-import AuditLogPage from '@/pages/admin/AuditLogPage';
-
-// ── Client management pages ───────────────────────────────────────────────────
-import ClientList      from '@/pages/clients/ClientList';
-import NewClientWizard from '@/pages/clients/NewClientWizard';
-
-// ── Client portal pages ───────────────────────────────────────────────────────
 import PortalShell from '@/layouts/PortalShell';
-import ClientDashboard from '@/pages/portal/ClientDashboard';
-import ClientReports from '@/pages/portal/ClientReports';
-import ClientInsights from '@/pages/portal/ClientInsights';
-import PortalSentiment from '@/pages/portal/PortalSentiment';
-import PortalMedia from '@/pages/portal/PortalMedia';
-import PortalBrandScorecard from '@/pages/portal/PortalBrandScorecard';
-import PortalBriefings from '@/pages/portal/PortalBriefings';
 
-// ── Fallback pages ────────────────────────────────────────────────────────────
+// ── Fallback pages (eager — lightweight) ──────────────────────────────────────
 import Unauthorized from '@/pages/Unauthorized';
 import NotFound from '@/pages/NotFound';
+
+// ── Module pages (lazy — heavy, code-split per route) ─────────────────────────
+const OnboardingPage       = lazy(() => import('@/pages/engagements/modules/OnboardingPage'));
+const DiscoverySession     = lazy(() => import('@/pages/engagements/discovery/DiscoverySession'));
+const PowerMapPage         = lazy(() => import('@/pages/engagements/modules/PowerMapPage'));
+const IntelTrackerPage     = lazy(() => import('@/pages/engagements/modules/IntelTrackerPage'));
+const CompetitorsPage      = lazy(() => import('@/pages/engagements/modules/CompetitorsPage'));
+const GeospatialPage       = lazy(() => import('@/pages/engagements/modules/GeospatialPage'));
+const NarrativePage        = lazy(() => import('@/pages/engagements/modules/NarrativePage'));
+const ScenariosPage        = lazy(() => import('@/pages/engagements/modules/ScenariosPage'));
+const BrandAuditPage       = lazy(() => import('@/pages/engagements/modules/BrandAuditPage'));
+const CommsPlannerPage     = lazy(() => import('@/pages/engagements/modules/CommsPlannerPage'));
+const ContentCalendarPage  = lazy(() => import('@/pages/engagements/modules/ContentCalendarPage'));
+const CrisisPage           = lazy(() => import('@/pages/engagements/modules/CrisisPage'));
+const CadencePage          = lazy(() => import('@/pages/engagements/modules/CadencePage'));
+const ReportsPage          = lazy(() => import('@/pages/engagements/modules/ReportsPage'));
+const CloseOutPage         = lazy(() => import('@/pages/engagements/modules/CloseOutPage'));
+const KnowledgeBasePage    = lazy(() => import('@/pages/KnowledgeBasePage'));
+const NotificationsPage    = lazy(() => import('@/pages/NotificationsPage'));
+
+// ── Admin pages (lazy) ────────────────────────────────────────────────────────
+const AdminPanelPage       = lazy(() => import('@/pages/admin/AdminPanelPage'));
+const AdminDashboard       = lazy(() => import('@/pages/admin/AdminDashboard'));
+const UserManagementPage   = lazy(() => import('@/pages/admin/UserManagementPage'));
+const PortalAccessPage     = lazy(() => import('@/pages/admin/PortalAccessPage'));
+const IntegrationsPage     = lazy(() => import('@/pages/admin/IntegrationsPage'));
+const AuditLogPage         = lazy(() => import('@/pages/admin/AuditLogPage'));
+
+// ── Client management (lazy) ──────────────────────────────────────────────────
+const ClientList           = lazy(() => import('@/pages/clients/ClientList'));
+const NewClientWizard      = lazy(() => import('@/pages/clients/NewClientWizard'));
+
+// ── Client portal pages (lazy) ────────────────────────────────────────────────
+const ClientDashboard      = lazy(() => import('@/pages/portal/ClientDashboard'));
+const ClientReports        = lazy(() => import('@/pages/portal/ClientReports'));
+const ClientInsights       = lazy(() => import('@/pages/portal/ClientInsights'));
+const PortalSentiment      = lazy(() => import('@/pages/portal/PortalSentiment'));
+const PortalMedia          = lazy(() => import('@/pages/portal/PortalMedia'));
+const PortalBrandScorecard = lazy(() => import('@/pages/portal/PortalBrandScorecard'));
+const PortalBriefings      = lazy(() => import('@/pages/portal/PortalBriefings'));
 
 /* ─────────────────────────────────────────────
    Constants
@@ -134,12 +148,15 @@ const INTERNAL_ROLES: AppRole[] = [
 ];
 
 /* ─────────────────────────────────────────────
-   Query client
+   Query client — tuned stale times per data type
 ───────────────────────────────────────────── */
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 1, staleTime: 30_000 },
+    queries: {
+      retry:     1,
+      staleTime: 2 * 60 * 1000, // 2 min default (intel_items cadence)
+    },
   },
 });
 
@@ -154,34 +171,28 @@ export default function App() {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          {/* AuthProvider must be inside BrowserRouter (uses useNavigate) */}
           <AuthProvider>
             <Routes>
 
               {/* ── Public auth routes ──────────────────────────────────── */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/auth/login" element={<Navigate to="/login" replace />} />
-              <Route path="/auth/mfa-setup" element={<MFASetupPage />} />
-              <Route path="/auth/mfa-verify" element={<MFAVerifyPage />} />
+              <Route path="/login"               element={<LoginPage />} />
+              <Route path="/auth/login"          element={<Navigate to="/login" replace />} />
+              <Route path="/auth/mfa-setup"      element={<MFASetupPage />} />
+              <Route path="/auth/mfa-verify"     element={<MFAVerifyPage />} />
               <Route path="/auth/reset-password" element={<PasswordResetPage />} />
 
               {/* ── Root → login ────────────────────────────────────────── */}
               <Route path="/" element={<Navigate to="/login" replace />} />
 
               {/* ── Legacy role-prefixed redirect aliases ────────────────── */}
-              <Route path="/advisor/*" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/senior/*" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/comms/*" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/intel/*" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/digital/*" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/advisor/*"        element={<Navigate to="/dashboard" replace />} />
+              <Route path="/senior/*"         element={<Navigate to="/dashboard" replace />} />
+              <Route path="/comms/*"          element={<Navigate to="/dashboard" replace />} />
+              <Route path="/intel/*"          element={<Navigate to="/dashboard" replace />} />
+              <Route path="/digital/*"        element={<Navigate to="/dashboard" replace />} />
               <Route path="/portal/dashboard" element={<Navigate to="/portal" replace />} />
 
               {/* ── Internal portal ─────────────────────────────────────── */}
-              {/*
-               * Outer ProtectedRoute guards the entire internal portal.
-               * EngagementProvider wraps all internal routes so context is available.
-               * AppShell is the layout — renders sidebar + header + <Outlet />.
-               */}
               <Route
                 element={
                   <ProtectedRoute allowedRoles={INTERNAL_ROLES} requireMfa>
@@ -195,82 +206,75 @@ export default function App() {
                 <Route path="/dashboard" element={<DashboardRouter />} />
 
                 {/* Client management */}
-                <Route path="/clients"     element={<ClientList />} />
-                <Route path="/clients/new" element={<NewClientWizard />} />
+                <Route path="/clients"     element={<Suspense fallback={<PageFallback />}><ClientList /></Suspense>} />
+                <Route path="/clients/new" element={<Suspense fallback={<PageFallback />}><NewClientWizard /></Suspense>} />
 
                 {/* Engagement list */}
                 <Route path="/engagements" element={<EngagementList />} />
 
+                {/* Notifications */}
+                <Route path="/notifications" element={<Suspense fallback={<PageFallback />}><NotificationsPage /></Suspense>} />
+
                 {/* Discovery session — full-page, outside the workspace tab strip */}
                 <Route
                   path="/engagements/:id/discovery"
-                  element={<DiscoverySession />}
+                  element={<Suspense fallback={<PageFallback />}><DiscoverySession /></Suspense>}
                 />
 
                 {/* Engagement workspace — sets active engagement on mount */}
                 <Route path="/engagements/:id" element={<EngagementWorkspace />}>
-                  {/* Default → onboarding */}
                   <Route index element={<Navigate to="onboarding" replace />} />
 
-                  {/* Module routes */}
-                  <Route path="onboarding"       element={<OnboardingPage />} />
-                  <Route path="power-map"        element={<PowerMapPage />} />
-                  <Route path="intel-tracker"    element={<IntelTrackerPage />} />
-                  <Route path="competitors"      element={<CompetitorsPage />} />
-                  <Route path="geospatial"       element={<GeospatialPage />} />
-                  <Route path="narrative"        element={<NarrativePage />} />
-                  <Route path="scenarios"        element={<ScenariosPage />} />
-                  <Route path="brand-audit"      element={<BrandAuditPage />} />
-                  <Route path="comms-planner"    element={<CommsPlannerPage />} />
-                  <Route path="content-calendar" element={<ContentCalendarPage />} />
-                  <Route path="crisis"           element={<CrisisPage />} />
-                  <Route path="cadence"          element={<CadencePage />} />
-                  <Route path="reports"          element={<ReportsPage />} />
-                  <Route path="close-out"        element={<CloseOutPage />} />
+                  <Route path="onboarding"        element={<Suspense fallback={<PageFallback />}><OnboardingPage /></Suspense>} />
+                  <Route path="power-map"         element={<Suspense fallback={<PageFallback />}><PowerMapPage /></Suspense>} />
+                  <Route path="intel-tracker"     element={<Suspense fallback={<PageFallback />}><IntelTrackerPage /></Suspense>} />
+                  <Route path="competitors"       element={<Suspense fallback={<PageFallback />}><CompetitorsPage /></Suspense>} />
+                  <Route path="geospatial"        element={<Suspense fallback={<PageFallback />}><GeospatialPage /></Suspense>} />
+                  <Route path="narrative"         element={<Suspense fallback={<PageFallback />}><NarrativePage /></Suspense>} />
+                  <Route path="scenarios"         element={<Suspense fallback={<PageFallback />}><ScenariosPage /></Suspense>} />
+                  <Route path="brand-audit"       element={<Suspense fallback={<PageFallback />}><BrandAuditPage /></Suspense>} />
+                  <Route path="comms-planner"     element={<Suspense fallback={<PageFallback />}><CommsPlannerPage /></Suspense>} />
+                  <Route path="content-calendar"  element={<Suspense fallback={<PageFallback />}><ContentCalendarPage /></Suspense>} />
+                  <Route path="crisis"            element={<Suspense fallback={<PageFallback />}><CrisisPage /></Suspense>} />
+                  <Route path="cadence"           element={<Suspense fallback={<PageFallback />}><CadencePage /></Suspense>} />
+                  <Route path="reports"           element={<Suspense fallback={<PageFallback />}><ReportsPage /></Suspense>} />
+                  <Route path="close-out"         element={<Suspense fallback={<PageFallback />}><CloseOutPage /></Suspense>} />
                 </Route>
 
                 {/* Knowledge Base — all internal roles */}
-                <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
+                <Route path="/knowledge-base" element={<Suspense fallback={<PageFallback />}><KnowledgeBasePage /></Suspense>} />
 
                 {/* Admin section — nested ProtectedRoute for super_admin only */}
                 <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
-                  <Route path="/admin"                   element={<AdminPanelPage />} />
-                  <Route path="/admin/dashboard"         element={<AdminDashboard />} />
-                  <Route path="/admin/users"             element={<UserManagementPage />} />
-                  <Route path="/admin/portal-access"     element={<PortalAccessPage />} />
-                  <Route path="/admin/integrations"      element={<IntegrationsPage />} />
-                  <Route path="/admin/audit"             element={<AuditLogPage />} />
+                  <Route path="/admin"                element={<Suspense fallback={<PageFallback />}><AdminPanelPage /></Suspense>} />
+                  <Route path="/admin/dashboard"      element={<Suspense fallback={<PageFallback />}><AdminDashboard /></Suspense>} />
+                  <Route path="/admin/users"          element={<Suspense fallback={<PageFallback />}><UserManagementPage /></Suspense>} />
+                  <Route path="/admin/portal-access"  element={<Suspense fallback={<PageFallback />}><PortalAccessPage /></Suspense>} />
+                  <Route path="/admin/integrations"   element={<Suspense fallback={<PageFallback />}><IntegrationsPage /></Suspense>} />
+                  <Route path="/admin/audit"          element={<Suspense fallback={<PageFallback />}><AuditLogPage /></Suspense>} />
                 </Route>
               </Route>
 
               {/* ── Client portal ──────────────────────────────────────── */}
-              {/*
-               * PortalShell provides a cleaner, client-facing layout with
-               * module-gated sidebar navigation. No EngagementProvider needed.
-               * MFA is optional for client_principal users.
-               */}
               <Route
                 element={
-                  <ProtectedRoute
-                    allowedRoles={['client_principal']}
-                    requireMfa={false}
-                  >
+                  <ProtectedRoute allowedRoles={['client_principal']} requireMfa={false}>
                     <PortalShell />
                   </ProtectedRoute>
                 }
               >
-                <Route path="/portal"                    element={<ClientDashboard />} />
-                <Route path="/portal/reports"            element={<ClientReports />} />
-                <Route path="/portal/reports/briefings"  element={<PortalBriefings />} />
-                <Route path="/portal/insights"           element={<ClientInsights />} />
-                <Route path="/portal/insights/sentiment" element={<PortalSentiment />} />
-                <Route path="/portal/insights/media"     element={<PortalMedia />} />
-                <Route path="/portal/insights/brand"     element={<PortalBrandScorecard />} />
+                <Route path="/portal"                    element={<Suspense fallback={<PageFallback />}><ClientDashboard /></Suspense>} />
+                <Route path="/portal/reports"            element={<Suspense fallback={<PageFallback />}><ClientReports /></Suspense>} />
+                <Route path="/portal/reports/briefings"  element={<Suspense fallback={<PageFallback />}><PortalBriefings /></Suspense>} />
+                <Route path="/portal/insights"           element={<Suspense fallback={<PageFallback />}><ClientInsights /></Suspense>} />
+                <Route path="/portal/insights/sentiment" element={<Suspense fallback={<PageFallback />}><PortalSentiment /></Suspense>} />
+                <Route path="/portal/insights/media"     element={<Suspense fallback={<PageFallback />}><PortalMedia /></Suspense>} />
+                <Route path="/portal/insights/brand"     element={<Suspense fallback={<PageFallback />}><PortalBrandScorecard /></Suspense>} />
               </Route>
 
               {/* ── Fallback ────────────────────────────────────────────── */}
               <Route path="/unauthorized" element={<Unauthorized />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="*"             element={<NotFound />} />
 
             </Routes>
           </AuthProvider>

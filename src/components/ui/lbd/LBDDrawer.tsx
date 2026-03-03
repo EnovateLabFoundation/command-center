@@ -43,6 +43,8 @@ export function LBDDrawer({
         <DialogPrimitive.Content
           className={cn(
             'fixed right-0 top-0 bottom-0 z-50 flex flex-col',
+            /* Mobile: full width; desktop: configured width */
+            'w-full sm:max-w-none',
             'bg-card border-l border-border',
             accent && 'border-t-0',
             'shadow-2xl shadow-black/50',
@@ -51,7 +53,7 @@ export function LBDDrawer({
             'duration-300',
             className,
           )}
-          style={{ width: typeof width === 'number' ? `${width}px` : width }}
+          style={{ width: typeof width === 'number' ? `min(${width}px, 100vw)` : width }}
           aria-describedby={description ? 'drawer-desc' : undefined}
         >
           {/* Gold accent top stripe */}

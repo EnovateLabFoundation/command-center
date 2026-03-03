@@ -11,6 +11,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
+import { createNotification } from '@/hooks/useNotifications';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
 /* ── Types ─────────────────────────────────────────────────────────────────── */
@@ -201,6 +202,29 @@ export function useCrisis(engagementId: string | undefined) {
         record_id: data.id,
         new_values: { crisis_type_id: crisisTypeId, status: 'active' },
       } as TablesInsert<'audit_logs'>);
+
+      // Notify lead_advisor, comms_director, senior_advisor
+      const crisisLabel = crisisType?.name ?? 'Crisis';
+      const { data: eng } = await supabase
+        .from('engagements')
+        .select('lead_advisor_id')
+        .eq('id', engId)
+        .maybeSingle();
+      const notifTargets = [eng?.lead_advisor_id, userId].filter(Boolean) as string[];
+      const uniqueTargets = [...new Set(notifTargets)];
+      await Promise.allSettled(
+        uniqueTargets.map((uid) =>
+          createNotification({
+            user_id:       uid,
+            engagement_id: engId,
+            type:          'crisis',
+            title:         `Crisis Activated: ${crisisLabel}`,
+            body:          notes ?? 'Crisis protocol has been activated. Immediate action required.',
+            link_to:       `/engagements/${engId}/crisis`,
+            created_by:    userId,
+          })
+        )
+      );
 
       return data;
     },

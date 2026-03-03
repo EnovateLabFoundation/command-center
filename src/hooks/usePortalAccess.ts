@@ -10,6 +10,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { createNotification } from '@/hooks/useNotifications';
 import type { Json } from '@/integrations/supabase/types';
 
 const ACCESS_KEY = ['admin', 'portal-access'];
@@ -120,6 +121,17 @@ export function useGrantPortalAccess() {
         is_active: true,
       });
       if (error) throw error;
+
+      // Notify the client user that portal access was granted
+      await createNotification({
+        user_id:       params.user_id,
+        engagement_id: params.engagement_id,
+        type:          'portal_access',
+        title:         'Client Portal Access Granted',
+        body:          `You now have access to ${params.allowed_modules.length} portal module(s).`,
+        link_to:       '/portal',
+        created_by:    params.created_by,
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ACCESS_KEY }),
   });
@@ -148,6 +160,23 @@ export function useRevokePortalAccess() {
         record_id: params.id,
         new_values: { is_active: false, action: 'revoked' },
       });
+
+      // Notify the affected user
+      const { data: accessRow } = await supabase
+        .from('client_portal_access')
+        .select('user_id, engagement_id')
+        .eq('id', params.id)
+        .maybeSingle();
+      if (accessRow?.user_id) {
+        await createNotification({
+          user_id:       accessRow.user_id,
+          engagement_id: accessRow.engagement_id ?? undefined,
+          type:          'portal_access',
+          title:         'Client Portal Access Revoked',
+          body:          'Your portal access has been revoked. Contact your advisor for details.',
+          created_by:    params.revoked_by,
+        });
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ACCESS_KEY }),
   });
