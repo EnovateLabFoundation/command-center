@@ -334,6 +334,44 @@ export type Database = {
           },
         ]
       }
+      competitor_metrics_history: {
+        Row: {
+          competitor_profile_id: string
+          created_at: string
+          engagement_rate: number | null
+          followers: number | null
+          id: string
+          metric_date: string
+          platform: string
+        }
+        Insert: {
+          competitor_profile_id: string
+          created_at?: string
+          engagement_rate?: number | null
+          followers?: number | null
+          id?: string
+          metric_date?: string
+          platform?: string
+        }
+        Update: {
+          competitor_profile_id?: string
+          created_at?: string
+          engagement_rate?: number | null
+          followers?: number | null
+          id?: string
+          metric_date?: string
+          platform?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitor_metrics_history_competitor_profile_id_fkey"
+            columns: ["competitor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "competitor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competitor_profiles: {
         Row: {
           alliance_map: Json | null
