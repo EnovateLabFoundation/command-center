@@ -608,26 +608,19 @@ export function Step5Content({ stepState, updateStep, engagementId }: StepConten
       const results: string[] = [];
 
       // Seed Power Map (stakeholders)
-      const { error: shErr } = await supabase.from('stakeholders').insert({
+      const { error: shErr } = await (supabase.from('stakeholders').insert as any)({
         engagement_id: engagementId,
         name: 'Primary Stakeholder (seed)',
-        role: 'Key Contact',
-        influence_level: 'high',
-        relationship_status: 'neutral',
-        notes: 'Auto-seeded at intelligence baseline setup. Update with real stakeholder data.',
+        category: 'government',
         created_by: user?.id,
       });
       if (shErr) throw new Error(`Power Map seed failed: ${shErr.message}`);
       results.push('Power Map record seeded');
 
       // Seed Intel Tracker (intel_items)
-      const { error: inErr } = await supabase.from('intel_items').insert({
+      const { error: inErr } = await (supabase.from('intel_items').insert as any)({
         engagement_id: engagementId,
-        title: 'Intelligence Baseline Briefing (seed)',
-        category: 'political',
-        source: 'Internal',
-        reliability: 'unverified',
-        significance: 'medium',
+        headline: 'Intelligence Baseline Briefing (seed)',
         summary: 'Auto-seeded at intelligence baseline setup. Update with verified intelligence.',
         created_by: user?.id,
       });
@@ -759,12 +752,10 @@ export function Step6Content({ stepState, updateStep, engagementId }: StepConten
       if (npErr) throw new Error(`Narrative platform seed: ${npErr.message}`);
 
       // Scenarios stub
-      const { error: scErr } = await supabase.from('scenarios').insert({
+      const { error: scErr } = await (supabase.from('scenarios').insert as any)({
         engagement_id: engagementId,
-        title: 'Baseline Scenario (seed)',
-        description: 'Auto-seeded at first strategy session. Update with scenario analysis.',
-        probability: 'medium',
-        impact: 'high',
+        name: 'Baseline Scenario (seed)',
+        status: 'active',
         created_by: user?.id,
       });
       if (scErr) throw new Error(`Scenarios seed: ${scErr.message}`);

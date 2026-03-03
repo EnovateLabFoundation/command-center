@@ -154,25 +154,25 @@ export default function CommsDashboard() {
           label="Active Initiatives"
           value={initiatives.isLoading ? '—' : activeInitCount}
           accentClass="gold"
-          isLoading={initiatives.isLoading}
+          loading={initiatives.isLoading}
         />
         <LBDStatCard
           label="Tracked Engagements"
           value={sentiment.isLoading ? '—' : (sentiment.data?.length ?? 0)}
           accentClass="info"
-          isLoading={sentiment.isLoading}
+          loading={sentiment.isLoading}
         />
         <LBDStatCard
           label="Negative Narrative"
           value={sentiment.isLoading ? '—' : negEngCount}
           accentClass={negEngCount > 0 ? 'danger' : 'success'}
-          isLoading={sentiment.isLoading}
+          loading={sentiment.isLoading}
         />
         <LBDStatCard
           label="Events This Week"
           value={events.isLoading ? '—' : thisWeekCount}
           accentClass="gold"
-          isLoading={events.isLoading}
+          loading={events.isLoading}
         />
       </div>
 

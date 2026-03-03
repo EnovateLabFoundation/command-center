@@ -99,7 +99,7 @@ export interface IntelEscalationRow extends Record<string, unknown> {
   sentiment_score: number | null;
   source_name: string | null;
   platform: string | null;
-  reach_tier: string | null;
+  reach_tier: number | null;
   narrative_theme: string | null;
   date_logged: string;
   is_urgent: boolean;
@@ -119,7 +119,7 @@ export function useIntelEscalationQueue() {
           'id, headline, summary, sentiment_score, source_name, platform, reach_tier, narrative_theme, date_logged, is_urgent, action_status, engagement_id',
         )
         .eq('is_escalated', true)
-        .in('action_status', ['pending', null as unknown as string])
+        .or('action_status.eq.pending,action_status.is.null')
         .order('is_urgent', { ascending: false })
         .order('date_logged', { ascending: false })
         .limit(25);
@@ -148,7 +148,7 @@ export function useUpdateEscalationStatus() {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase
         .from('intel_items')
-        .update({ action_status: status })
+        .update({ action_status: status as any })
         .eq('id', id);
       if (error) throw error;
     },

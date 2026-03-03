@@ -61,23 +61,25 @@ export function useEngagementDetail(engagementId: string | undefined) {
           id, title, status, phase, health_rag,
           start_date, end_date, fee_amount, billing_status,
           lead_advisor_id, client_id, created_at, created_by,
-          clients ( name, type ),
-          profiles ( full_name )
+          clients ( name, type )
         `)
         .eq('id', engagementId!)
         .single();
 
       if (error) throw error;
 
-      const raw = data as {
-        id: string; title: string; status: string; phase: string;
-        health_rag: string | null; start_date: string | null; end_date: string | null;
-        fee_amount: number | null; billing_status: string | null;
-        lead_advisor_id: string | null; client_id: string;
-        created_at: string; created_by: string;
-        clients: { name: string; type: string } | null;
-        profiles: { full_name: string } | null;
-      };
+      // Fetch lead advisor name separately (no direct FK from engagements to profiles)
+      let leadAdvisorName: string | null = null;
+      if ((data as any).lead_advisor_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', (data as any).lead_advisor_id)
+          .maybeSingle();
+        leadAdvisorName = profile?.full_name ?? null;
+      }
+
+      const raw = data as any;
 
       return {
         id: raw.id,
@@ -90,7 +92,7 @@ export function useEngagementDetail(engagementId: string | undefined) {
         fee_amount: raw.fee_amount,
         billing_status: raw.billing_status,
         lead_advisor_id: raw.lead_advisor_id,
-        lead_advisor_name: raw.profiles?.full_name ?? null,
+        lead_advisor_name: leadAdvisorName,
         client_id: raw.client_id,
         client_name: raw.clients?.name ?? '—',
         client_type: raw.clients?.type ?? '—',
@@ -107,23 +109,23 @@ export function useLeadAdvisors() {
     queryKey: ['lead-advisors'],
     staleTime: 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Get user_ids with lead_advisor role
+      const { data: roleData, error } = await supabase
         .from('user_roles')
-        .select('user_id, profiles!inner ( id, full_name, email, is_active )')
+        .select('user_id')
         .eq('role', 'lead_advisor');
 
       if (error) throw error;
+      if (!roleData?.length) return [];
 
-      return (data ?? [])
-        .map((r) => {
-          const row = r as {
-            user_id: string;
-            profiles: { id: string; full_name: string; email: string; is_active: boolean };
-          };
-          return row.profiles;
-        })
-        .filter((p) => p.is_active)
-        .map(({ id, full_name, email }) => ({ id, full_name, email }));
+      const userIds = roleData.map(r => r.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, is_active')
+        .in('id', userIds)
+        .eq('is_active', true);
+
+      return (profiles ?? []).map(({ id, full_name, email }) => ({ id, full_name, email }));
     },
   });
 }

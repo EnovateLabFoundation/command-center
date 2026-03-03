@@ -125,7 +125,7 @@ export default function StepCard({
             <span className="text-sm font-semibold text-foreground leading-tight">
               {step.title}
             </span>
-            <LBDBadge variant={cfg.variant} size="sm">
+            <LBDBadge variant={cfg.variant as any} size="sm">
               {cfg.label}
             </LBDBadge>
             {isLocked && (

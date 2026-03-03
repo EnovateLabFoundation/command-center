@@ -14,7 +14,7 @@ interface SparkDatum {
   value: number;
 }
 
-interface LBDStatCardProps {
+export interface LBDStatCardProps {
   label: string;
   value: string | number;
   subLabel?: string;
@@ -23,6 +23,8 @@ interface LBDStatCardProps {
   changeLabel?: string;
   sparkline?: number[];
   loading?: boolean;
+  /** Alias for `loading` */
+  isLoading?: boolean;
   className?: string;
   /** Override accent colour for the sparkline / trend */
   accentClass?: 'gold' | 'success' | 'danger' | 'info';
@@ -62,11 +64,13 @@ export function LBDStatCard({
   change,
   changeLabel = 'vs last period',
   sparkline,
-  loading = false,
+  loading: loadingProp = false,
+  isLoading: isLoadingProp,
   className,
   accentClass = 'gold',
   onClick,
 }: LBDStatCardProps) {
+  const loading = loadingProp || isLoadingProp || false;
   if (loading) {
     return <LBDLoadingSkeleton variant="stat" className={className} />;
   }

@@ -168,7 +168,7 @@ function buildColumns(onCreateEngagement: (clientId: string) => void): ColumnDef
     },
   },
   {
-    key: 'id' as keyof ClientRow,
+    key: 'id',
     label: 'Actions',
     sortable: false,
     render: (_v, row) => {
@@ -250,15 +250,10 @@ export default function ClientList() {
           icon={<Building2 className="w-8 h-8" />}
           title="No Clients Yet"
           description="Begin the client qualification process to onboard your first client."
-          action={
-            <button
-              onClick={() => navigate('/clients/new')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-medium hover:bg-accent/90 transition-colors"
-            >
-              <UserPlus className="w-4 h-4" />
-              Qualify First Client
-            </button>
-          }
+          action={{
+            label: 'Qualify First Client',
+            onClick: () => navigate('/clients/new'),
+          }}
         />
       ) : (
         <LBDCard padding="none">
@@ -266,11 +261,12 @@ export default function ClientList() {
             columns={columns}
             data={clients ?? []}
             isLoading={isLoading}
-            searchable
+            enableSearch
             searchPlaceholder="Search clients by name or contact…"
+            enableExport
             exportFilename="clients"
             onRowClick={(row) => navigate(`/clients/${row.id}`)}
-            emptyMessage="No clients match your search."
+            emptyTitle="No clients match your search."
           />
         </LBDCard>
       )}

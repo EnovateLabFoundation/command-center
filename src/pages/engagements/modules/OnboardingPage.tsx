@@ -295,7 +295,7 @@ export default function OnboardingPage() {
                 step={step}
                 stepState={stepState}
                 isLocked={locked}
-                startDate={detail?.start_date ?? contextEngagement?.start_date}
+                startDate={detail?.start_date ?? (contextEngagement as any)?.start_date}
                 defaultExpanded={
                   step.number === completedCount + 1 && !isOnboardingComplete
                 }

@@ -120,7 +120,7 @@ export default function IntelTrackerPage() {
         await updateMutation.mutateAsync({ id: editTarget.id, ...values });
         toast.success('Item updated', 'Intelligence item has been updated.');
       } else {
-        await addMutation.mutateAsync(values);
+        await addMutation.mutateAsync(values as any);
         toast.success('Item logged', 'Intelligence item has been added to the tracker.');
       }
       closeDrawer();

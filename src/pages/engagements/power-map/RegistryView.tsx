@@ -317,7 +317,7 @@ export default function RegistryView({
       <FilterPill
         label="All Categories"
         value={filterCategory}
-        onChange={setFilterCategory}
+        onChange={(v) => setFilterCategory(v as any)}
         options={(Object.keys(CATEGORY_LABELS) as StakeholderCategory[]).map((k) => ({
           value: k, label: CATEGORY_LABELS[k],
         }))}
@@ -325,7 +325,7 @@ export default function RegistryView({
       <FilterPill
         label="All Alignments"
         value={filterAlignment}
-        onChange={setFilterAlignment}
+        onChange={(v) => setFilterAlignment(v as any)}
         options={(Object.keys(ALIGNMENT_LABELS) as StakeholderAlignment[]).map((k) => ({
           value: k, label: ALIGNMENT_LABELS[k],
         }))}
@@ -333,7 +333,7 @@ export default function RegistryView({
       <FilterPill
         label="All Priorities"
         value={filterPriority}
-        onChange={setFilterPriority}
+        onChange={(v) => setFilterPriority(v as any)}
         options={(Object.keys(PRIORITY_LABELS) as StrategicPriority[]).map((k) => ({
           value: k, label: PRIORITY_LABELS[k],
         }))}
