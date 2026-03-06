@@ -123,15 +123,81 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // ── Overdue cadence notifications ───────────────────────────────────
+    // Find touchpoints that are still 'scheduled' but past their scheduled_date.
+    // Notify the lead_advisor of each affected engagement once per day.
+    let overdueNotified = 0;
+    try {
+      const now = new Date().toISOString();
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const { data: overdueTouchpoints } = await supabase
+        .from("cadence_touchpoints")
+        .select("id, engagement_id, touchpoint_type, scheduled_date")
+        .in("status", ["scheduled", "rescheduled"])
+        .lt("scheduled_date", now);
+
+      if (overdueTouchpoints && overdueTouchpoints.length > 0) {
+        // Group by engagement_id to send one notification per engagement
+        const byEngagement = new Map<string, typeof overdueTouchpoints>();
+        for (const tp of overdueTouchpoints) {
+          if (!tp.engagement_id) continue;
+          if (!byEngagement.has(tp.engagement_id)) byEngagement.set(tp.engagement_id, []);
+          byEngagement.get(tp.engagement_id)!.push(tp);
+        }
+
+        for (const [engagementId, tps] of byEngagement) {
+          // Get lead_advisor_id for this engagement
+          const { data: eng } = await supabase
+            .from("engagements")
+            .select("lead_advisor_id, title")
+            .eq("id", engagementId)
+            .maybeSingle();
+
+          if (!eng?.lead_advisor_id) continue;
+
+          // Check if we already sent an overdue notification today for this engagement
+          const { data: existingNotif } = await supabase
+            .from("notifications")
+            .select("id")
+            .eq("user_id", eng.lead_advisor_id)
+            .eq("engagement_id", engagementId)
+            .eq("type", "overdue")
+            .gte("created_at", todayStart.toISOString())
+            .maybeSingle();
+
+          if (existingNotif) continue; // already notified today
+
+          const count = tps.length;
+          await supabase.from("notifications").insert({
+            user_id: eng.lead_advisor_id,
+            type: "overdue",
+            title: `${count} Overdue Cadence Touchpoint${count > 1 ? "s" : ""}`,
+            body: `${count} scheduled touchpoint${count > 1 ? "s are" : " is"} overdue for ${eng.title ?? "this engagement"}.`,
+            link_to: `/engagements/${engagementId}/cadence`,
+            engagement_id: engagementId,
+          });
+          overdueNotified++;
+        }
+      }
+    } catch (err) {
+      console.error("[cron-scheduler] overdue cadence check error:", (err as Error).message);
+    }
+
     // Log scheduler execution to audit_logs
     await supabase.from("audit_logs").insert({
       user_id: "00000000-0000-0000-0000-000000000000", // system user
       action: "read",
       table_name: "cron_scheduler",
-      new_values: { results, triggered_count: results.filter((r) => r.triggered).length },
+      new_values: {
+        results,
+        triggered_count: results.filter((r) => r.triggered).length,
+        overdue_notifications_sent: overdueNotified,
+      },
     }).catch(() => {}); // fire-and-forget
 
-    return json({ results, timestamp: new Date().toISOString() });
+    return json({ results, overdue_notifications_sent: overdueNotified, timestamp: new Date().toISOString() });
   } catch (err) {
     console.error("[cron-scheduler] Error:", err);
     return json({ error: (err as Error).message }, 500);

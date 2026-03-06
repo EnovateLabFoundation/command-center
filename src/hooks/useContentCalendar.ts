@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { createNotification } from '@/hooks/useNotifications';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
 export type ContentItem = Tables<'content_items'>;
@@ -100,6 +101,30 @@ export function useContentCalendar(engagementId: string | undefined) {
     }
     await fetchItems();
     toast({ title: 'Content item updated' });
+
+    // Notify when content is approved
+    if (updates.status === 'approved' && engagementId) {
+      try {
+        const { data: eng } = await supabase
+          .from('engagements')
+          .select('lead_advisor_id')
+          .eq('id', engagementId)
+          .maybeSingle();
+        if (eng?.lead_advisor_id) {
+          await createNotification({
+            user_id: eng.lead_advisor_id,
+            type: 'content',
+            title: 'Content Item Approved',
+            body: 'A content item has been approved and is ready for publishing.',
+            link_to: `/engagements/${engagementId}/content-calendar`,
+            engagement_id: engagementId,
+          });
+        }
+      } catch (err) {
+        console.error('[useContentCalendar] approval notification error:', err);
+      }
+    }
+
     return true;
   };
 

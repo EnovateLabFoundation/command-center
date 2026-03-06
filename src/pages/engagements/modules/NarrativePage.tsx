@@ -40,7 +40,7 @@ export default function NarrativePage() {
         </TabsContent>
 
         <TabsContent value="discipline">
-          <MessageDisciplineTab />
+          <MessageDisciplineTab engagementId={id} />
         </TabsContent>
       </Tabs>
     </div>

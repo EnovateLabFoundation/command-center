@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthStore } from '@/stores/authStore';
 import { reportToBlob } from '@/lib/reportEngine';
+import { createNotification } from '@/hooks/useNotifications';
 import type jsPDF from 'jspdf';
 
 /* ─────────────────────────────────────────────
@@ -127,8 +128,30 @@ export function usePublishReport() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, vars) => {
+    onSuccess: async (data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['reports', vars.engagementId] });
+
+      // Notify all portal users (client_principals) with access to this engagement
+      try {
+        const { data: portalRows } = await supabase
+          .from('client_portal_access')
+          .select('user_id')
+          .eq('engagement_id', vars.engagementId)
+          .eq('is_active', true);
+
+        for (const row of (portalRows ?? [])) {
+          await createNotification({
+            user_id: row.user_id,
+            type: 'report',
+            title: `New Report Published: ${vars.title}`,
+            body: `A new ${vars.type} report is now available in your portal.`,
+            link_to: '/portal',
+            engagement_id: vars.engagementId,
+          });
+        }
+      } catch (err) {
+        console.error('[usePublishReport] notification error:', err);
+      }
     },
   });
 }

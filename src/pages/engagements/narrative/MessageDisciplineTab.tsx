@@ -17,6 +17,7 @@ import { LBDCard } from '@/components/ui/lbd/LBDCard';
 import { LBDModal, LBDModalButton } from '@/components/ui/lbd/LBDModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/lbd';
+import { createNotification } from '@/hooks/useNotifications';
 
 /* ── Types ──────────────────────────────────── */
 
@@ -107,7 +108,9 @@ function AddPhraseForm({ variant, onAdd }: {
 
 /* ── Main Component ─────────────────────────── */
 
-export default function MessageDisciplineTab() {
+const QUALITY_GATE_THRESHOLD = 70;
+
+export default function MessageDisciplineTab({ engagementId }: { engagementId?: string }) {
   const [approved, setApproved] = useState<Phrase[]>([]);
   const [prohibited, setProhibited] = useState<Phrase[]>([]);
 
@@ -157,7 +160,31 @@ export default function MessageDisciplineTab() {
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
-        setComplianceResult(data as ComplianceResult);
+        const result = data as ComplianceResult;
+        setComplianceResult(result);
+
+        // Quality gate: notify lead_advisor when compliance is critically low
+        if (result.compliance_score < QUALITY_GATE_THRESHOLD && engagementId) {
+          try {
+            const { data: eng } = await supabase
+              .from('engagements')
+              .select('lead_advisor_id')
+              .eq('id', engagementId)
+              .maybeSingle();
+            if (eng?.lead_advisor_id) {
+              await createNotification({
+                user_id: eng.lead_advisor_id,
+                type: 'quality_gate',
+                title: `Quality Gate Alert: ${result.compliance_score}% Compliance`,
+                body: `Narrative content failed the compliance check. ${result.flagged_phrases.length} issue(s) found. Review required.`,
+                link_to: `/engagements/${engagementId}/narrative`,
+                engagement_id: engagementId,
+              });
+            }
+          } catch (notifErr) {
+            console.error('[MessageDisciplineTab] quality gate notification error:', notifErr);
+          }
+        }
       } catch (err: unknown) {
         toast.error('AI compliance check failed', (err as Error).message);
       } finally {
