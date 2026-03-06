@@ -254,8 +254,20 @@ export default function CompetitorProfileView({
                 <LBDSentimentBadge score={Math.round(competitor.avg_sentiment_score ?? 0) as SentimentScore} />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Influence Score</span>
+                <span className="text-xs text-muted-foreground">Elite Influence</span>
                 <span className="text-lg font-bold font-mono-data text-foreground">{competitor.influence_score ?? '—'}/10</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Party Leadership Favour</span>
+                <span className="text-lg font-bold font-mono-data text-foreground">{(competitor as any).favour_party_leadership ?? '—'}/10</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Financial Capacity</span>
+                <span className="text-lg font-bold font-mono-data text-foreground">{(competitor as any).financial_capacity ?? '—'}/10</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Grassroots Influence</span>
+                <span className="text-lg font-bold font-mono-data text-foreground">{(competitor as any).grassroots_influence ?? '—'}/10</span>
               </div>
             </div>
           </LBDCard>

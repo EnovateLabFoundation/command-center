@@ -20,6 +20,7 @@ import 'leaflet/dist/leaflet.css';
 import { cn } from '@/lib/utils';
 import type { StakeholderRow, StakeholderAlignment } from '@/hooks/usePowerMap';
 import { ALIGNMENT_LABELS, CATEGORY_LABELS } from '@/hooks/usePowerMap';
+import { NIGERIA_STATE_NAMES } from '@/lib/nigeriaGeo';
 
 /* ─────────────────────────────────────────────
    Alignment colours for map & graph
@@ -83,17 +84,84 @@ function MapLegend() {
 ───────────────────────────────────────────── */
 
 function GeoMap({ stakeholders }: { stakeholders: StakeholderRow[] }) {
-  const mapped = stakeholders.filter((s) => s.lat !== null && s.lng !== null);
+  const [stanceFilter, setStanceFilter] = useState<StakeholderAlignment | 'all'>('all');
+  const [stateFilter, setStateFilter] = useState<string>('');
 
-  // Compute map centre from stakeholders, default to Lagos
+  const filtered = useMemo(() => {
+    let list = stakeholders;
+    if (stanceFilter !== 'all') list = list.filter((s) => s.alignment === stanceFilter);
+    if (stateFilter) list = list.filter((s) => (s as any).state === stateFilter);
+    return list;
+  }, [stakeholders, stanceFilter, stateFilter]);
+
+  const mapped = filtered.filter((s) => s.lat !== null && s.lng !== null);
+
+  // Compute map centre from stakeholders, default to Nigeria centroid
   const centre = useMemo<[number, number]>(() => {
-    if (mapped.length === 0) return [6.5244, 3.3792];
+    if (mapped.length === 0) return [9.082, 8.6753];
     const avgLat = mapped.reduce((s, r) => s + (r.lat ?? 0), 0) / mapped.length;
     const avgLng = mapped.reduce((s, r) => s + (r.lng ?? 0), 0) / mapped.length;
     return [avgLat, avgLng];
   }, [mapped]);
 
+  // Unique states with mapped stakeholders for state filter
+  const availableStates = useMemo(() => {
+    const seen = new Set<string>();
+    for (const s of stakeholders) {
+      const st = (s as any).state;
+      if (st) seen.add(st);
+    }
+    return Array.from(seen).sort();
+  }, [stakeholders]);
+
   return (
+    <div className="space-y-3">
+      {/* Filters row */}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Stance filter */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-mono text-muted-foreground/50 uppercase tracking-widest">Stance:</span>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => setStanceFilter('all')}
+              className={cn(
+                'px-2.5 py-1 rounded text-[10px] font-semibold border transition-all',
+                stanceFilter === 'all'
+                  ? 'border-accent/50 bg-accent/10 text-accent'
+                  : 'border-border/40 text-muted-foreground/60 hover:border-border',
+              )}
+            >All</button>
+            {(['champion', 'supportive', 'neutral', 'hostile'] as StakeholderAlignment[]).map((a) => (
+              <button
+                key={a}
+                type="button"
+                onClick={() => setStanceFilter(stanceFilter === a ? 'all' : a)}
+                className={cn(
+                  'px-2.5 py-1 rounded text-[10px] font-semibold border transition-all',
+                  stanceFilter === a ? ALIGNMENT_CSS[a] : 'border-border/40 text-muted-foreground/60 hover:border-border',
+                )}
+              >{ALIGNMENT_LABELS[a]}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* State filter */}
+        <div className="flex items-center gap-1.5 ml-auto">
+          <span className="text-[10px] font-mono text-muted-foreground/50 uppercase tracking-widest">State:</span>
+          <select
+            value={stateFilter}
+            onChange={(e) => setStateFilter(e.target.value)}
+            className="bg-[#0a0a0c] border border-border/60 rounded text-xs text-foreground px-2 py-1 focus:outline-none focus:ring-1 focus:ring-accent/40"
+          >
+            <option value="">All States</option>
+            {(availableStates.length > 0 ? availableStates : NIGERIA_STATE_NAMES).map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
     <div className="relative rounded-xl overflow-hidden border border-border/60" style={{ height: 380 }}>
       <MapContainer
         center={centre}
@@ -166,6 +234,7 @@ function GeoMap({ stakeholders }: { stakeholders: StakeholderRow[] }) {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

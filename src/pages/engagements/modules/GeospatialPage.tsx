@@ -133,8 +133,9 @@ export default function GeospatialPage() {
                   <GeospatialMap
                     stakeholders={stakeholders}
                     onMarkerClick={(s) => {
-                      /* Try to identify region from stakeholder notes */
-                      setSelectedRegion(s.name);
+                      // Use the stakeholder's state field for region detail lookup
+                      const region = (s as any).state ?? s.name;
+                      setSelectedRegion(region);
                     }}
                   />
                 </Suspense>

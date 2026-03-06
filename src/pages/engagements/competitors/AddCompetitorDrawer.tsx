@@ -43,6 +43,9 @@ const emptyForm = {
   monthly_media_mentions: 0,
   threat_score: 5,
   influence_score: 5,
+  favour_party_leadership: 5,
+  financial_capacity: 5,
+  grassroots_influence: 5,
   auto_monitor: false,
 };
 
@@ -75,6 +78,9 @@ export default function AddCompetitorDrawer({
         monthly_media_mentions: editData.monthly_media_mentions ?? 0,
         threat_score: editData.threat_score ?? 5,
         influence_score: editData.influence_score ?? 5,
+        favour_party_leadership: (editData as any).favour_party_leadership ?? 5,
+        financial_capacity: (editData as any).financial_capacity ?? 5,
+        grassroots_influence: (editData as any).grassroots_influence ?? 5,
         auto_monitor: false,
       });
     } else {
@@ -141,11 +147,23 @@ export default function AddCompetitorDrawer({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="comp-threat" className="text-xs">Threat Score (0–10)</Label>
-            <Input id="comp-threat" type="number" min={0} max={10} value={form.threat_score} onChange={(e) => set('threat_score', Number(e.target.value))} />
+            <Input id="comp-threat" type="number" min={0} max={10} step={0.1} value={form.threat_score} onChange={(e) => set('threat_score', Number(e.target.value))} />
           </div>
           <div>
-            <Label htmlFor="comp-inf" className="text-xs">Influence Score (0–10)</Label>
-            <Input id="comp-inf" type="number" min={0} max={10} value={form.influence_score} onChange={(e) => set('influence_score', Number(e.target.value))} />
+            <Label htmlFor="comp-inf" className="text-xs">Elite Influence (0–10)</Label>
+            <Input id="comp-inf" type="number" min={0} max={10} step={0.1} value={form.influence_score} onChange={(e) => set('influence_score', Number(e.target.value))} />
+          </div>
+          <div>
+            <Label htmlFor="comp-party-fav" className="text-xs">Party Leadership Favour (0–10)</Label>
+            <Input id="comp-party-fav" type="number" min={0} max={10} step={0.1} value={form.favour_party_leadership} onChange={(e) => set('favour_party_leadership', Number(e.target.value))} />
+          </div>
+          <div>
+            <Label htmlFor="comp-fin" className="text-xs">Financial Capacity (0–10)</Label>
+            <Input id="comp-fin" type="number" min={0} max={10} step={0.1} value={form.financial_capacity} onChange={(e) => set('financial_capacity', Number(e.target.value))} />
+          </div>
+          <div>
+            <Label htmlFor="comp-grass" className="text-xs">Grassroots Influence (0–10)</Label>
+            <Input id="comp-grass" type="number" min={0} max={10} step={0.1} value={form.grassroots_influence} onChange={(e) => set('grassroots_influence', Number(e.target.value))} />
           </div>
         </div>
       </LBDDrawerSection>

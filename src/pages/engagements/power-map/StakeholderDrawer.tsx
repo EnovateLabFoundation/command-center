@@ -6,7 +6,7 @@
  * category/priority/strategy dropdowns, optional map coordinates.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -25,6 +25,12 @@ import {
   PRIORITY_LABELS,
   ENGAGEMENT_STRATEGY_OPTIONS,
 } from '@/hooks/usePowerMap';
+import {
+  NIGERIA_STATE_NAMES,
+  NIGERIA_GEOPOLITICAL_ZONES,
+  getSenatorialDistricts,
+  getZoneForState,
+} from '@/lib/nigeriaGeo';
 
 /* ─────────────────────────────────────────────
    Zod schema
@@ -33,7 +39,7 @@ import {
 const schema = z.object({
   name:                  z.string().min(1, 'Name is required').max(120),
   role_position:         z.string().max(120).optional().or(z.literal('')),
-  category:              z.enum(['government', 'media', 'civil_society', 'business', 'traditional']),
+  category:              z.enum(['government', 'media', 'civil_society', 'business', 'traditional', 'international', 'political_party']),
   alignment:             z.enum(['hostile', 'neutral', 'supportive', 'champion']).nullable(),
   influence_score:       z.number().min(1).max(10).nullable(),
   strategic_priority:    z.enum(['critical', 'high', 'medium', 'low']).nullable(),
@@ -42,6 +48,11 @@ const schema = z.object({
   risk_level:            z.string().max(80).optional().or(z.literal('')),
   lat:                   z.number().min(-90).max(90).nullable(),
   lng:                   z.number().min(-180).max(180).nullable(),
+  state:                 z.string().optional().or(z.literal('')),
+  senatorial_district:   z.string().optional().or(z.literal('')),
+  geopolitical_zone:     z.string().optional().or(z.literal('')),
+  lga:                   z.string().max(120).optional().or(z.literal('')),
+  ward:                  z.string().max(120).optional().or(z.literal('')),
   strategic_notes:       z.string().max(2000).optional().or(z.literal('')),
   engagement_strategy:   z.string().optional().or(z.literal('')),
 });
@@ -220,11 +231,13 @@ export default function StakeholderDrawer({
   open, onClose, initial, onSave, isSaving,
 }: StakeholderDrawerProps) {
   const isEdit = !!initial;
+  const [selectedState, setSelectedState] = useState<string>('');
 
   const {
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -240,6 +253,11 @@ export default function StakeholderDrawer({
       risk_level:          '',
       lat:                 null,
       lng:                 null,
+      state:               '',
+      senatorial_district: '',
+      geopolitical_zone:   '',
+      lga:                 '',
+      ward:                '',
       strategic_notes:     '',
       engagement_strategy: '',
     },
@@ -248,6 +266,8 @@ export default function StakeholderDrawer({
   // Populate form when editing
   useEffect(() => {
     if (open && initial) {
+      const st = (initial as any).state ?? '';
+      setSelectedState(st);
       reset({
         name:                initial.name,
         role_position:       initial.role_position ?? '',
@@ -260,18 +280,34 @@ export default function StakeholderDrawer({
         risk_level:          initial.risk_level ?? '',
         lat:                 initial.lat ?? null,
         lng:                 initial.lng ?? null,
+        state:               st,
+        senatorial_district: (initial as any).senatorial_district ?? '',
+        geopolitical_zone:   (initial as any).geopolitical_zone ?? '',
+        lga:                 (initial as any).lga ?? '',
+        ward:                (initial as any).ward ?? '',
         strategic_notes:     initial.strategic_notes ?? '',
         engagement_strategy: initial.engagement_strategy ?? '',
       });
     } else if (open && !initial) {
+      setSelectedState('');
       reset({
         name: '', role_position: '', category: 'government',
         alignment: null, influence_score: 5, strategic_priority: null,
         contact_frequency: '', last_contact_date: '', risk_level: '',
-        lat: null, lng: null, strategic_notes: '', engagement_strategy: '',
+        lat: null, lng: null,
+        state: '', senatorial_district: '', geopolitical_zone: '', lga: '', ward: '',
+        strategic_notes: '', engagement_strategy: '',
       });
     }
   }, [open, initial, reset]);
+
+  // When state changes, auto-fill zone + reset district
+  const handleStateChange = (stateName: string) => {
+    setSelectedState(stateName);
+    setValue('state', stateName);
+    setValue('geopolitical_zone', stateName ? (getZoneForState(stateName) ?? '') : '');
+    setValue('senatorial_district', '');
+  };
 
   async function onSubmit(values: FormValues) {
     await onSave(values);
@@ -472,43 +508,112 @@ export default function StakeholderDrawer({
           </div>
         </LBDDrawerSection>
 
-        {/* Map Location */}
-        <LBDDrawerSection label="Map Location (optional)">
-          <div className="grid grid-cols-2 gap-3">
+        {/* Location */}
+        <LBDDrawerSection label="Location (Nigeria)">
+          <div className="space-y-3">
+            {/* State — drives zone + district */}
             <div>
-              <FieldLabel>Latitude</FieldLabel>
+              <FieldLabel>State</FieldLabel>
+              <SelectInput
+                value={selectedState}
+                onChange={handleStateChange}
+                options={NIGERIA_STATE_NAMES.map((s) => ({ value: s, label: s }))}
+                placeholder="— Select state —"
+              />
+            </div>
+
+            {/* Geopolitical Zone (auto-filled) */}
+            <div>
+              <FieldLabel>Geopolitical Zone</FieldLabel>
               <Controller
-                name="lat"
+                name="geopolitical_zone"
                 control={control}
                 render={({ field }) => (
-                  <TextInput
-                    type="number"
-                    value={field.value !== null ? String(field.value) : ''}
-                    onChange={(v) => field.onChange(v === '' ? null : Number(v))}
-                    placeholder="e.g. 6.5244"
+                  <SelectInput
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    options={NIGERIA_GEOPOLITICAL_ZONES.map((z) => ({ value: z, label: z }))}
+                    placeholder="— Auto-filled from state —"
                   />
                 )}
               />
             </div>
+
+            {/* Senatorial District (filtered by state) */}
             <div>
-              <FieldLabel>Longitude</FieldLabel>
+              <FieldLabel>Senatorial District</FieldLabel>
               <Controller
-                name="lng"
+                name="senatorial_district"
                 control={control}
                 render={({ field }) => (
-                  <TextInput
-                    type="number"
-                    value={field.value !== null ? String(field.value) : ''}
-                    onChange={(v) => field.onChange(v === '' ? null : Number(v))}
-                    placeholder="e.g. 3.3792"
+                  <SelectInput
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    options={getSenatorialDistricts(selectedState).map((d) => ({ value: d, label: d }))}
+                    placeholder={selectedState ? '— Select district —' : '— Select state first —'}
                   />
                 )}
               />
+            </div>
+
+            {/* LGA + Ward */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <FieldLabel>LGA</FieldLabel>
+                <Controller
+                  name="lga"
+                  control={control}
+                  render={({ field }) => (
+                    <TextInput value={field.value ?? ''} onChange={field.onChange} placeholder="Local Govt. Area" />
+                  )}
+                />
+              </div>
+              <div>
+                <FieldLabel>Ward</FieldLabel>
+                <Controller
+                  name="ward"
+                  control={control}
+                  render={({ field }) => (
+                    <TextInput value={field.value ?? ''} onChange={field.onChange} placeholder="Ward name" />
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Lat / Lng */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <FieldLabel>Latitude</FieldLabel>
+                <Controller
+                  name="lat"
+                  control={control}
+                  render={({ field }) => (
+                    <TextInput
+                      type="number"
+                      value={field.value !== null ? String(field.value) : ''}
+                      onChange={(v) => field.onChange(v === '' ? null : Number(v))}
+                      placeholder="e.g. 6.5244"
+                    />
+                  )}
+                />
+              </div>
+              <div>
+                <FieldLabel>Longitude</FieldLabel>
+                <Controller
+                  name="lng"
+                  control={control}
+                  render={({ field }) => (
+                    <TextInput
+                      type="number"
+                      value={field.value !== null ? String(field.value) : ''}
+                      onChange={(v) => field.onChange(v === '' ? null : Number(v))}
+                      placeholder="e.g. 3.3792"
+                    />
+                  )}
+                />
+              </div>
             </div>
           </div>
-          <p className="text-[10px] font-mono text-muted-foreground/30 mt-2">
-            Used for positioning on the Network Map view.
-          </p>
         </LBDDrawerSection>
 
         {/* Strategic Notes */}

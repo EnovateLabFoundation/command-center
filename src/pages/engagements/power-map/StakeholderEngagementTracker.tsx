@@ -8,7 +8,7 @@
  * Route: /engagements/:id/power-map/engagement (or rendered as a tab)
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { format, differenceInDays } from 'date-fns';
 import {
@@ -74,7 +74,15 @@ export default function StakeholderEngagementTracker({ stakeholders, isLoadingSt
   } = useStakeholderEngagement(engagementId);
 
   const [selectedStakeholder, setSelectedStakeholder] = useState<StakeholderRow | null>(null);
+  const detailPanelRef = useRef<HTMLDivElement>(null);
   const [logOpen, setLogOpen] = useState(false);
+
+  // Auto-scroll to detail panel when a stakeholder is selected
+  useEffect(() => {
+    if (selectedStakeholder && detailPanelRef.current) {
+      detailPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedStakeholder]);
   const [logForm, setLogForm] = useState({
     stakeholder_id: '',
     interaction_date: format(new Date(), 'yyyy-MM-dd'),
@@ -263,7 +271,7 @@ export default function StakeholderEngagementTracker({ stakeholders, isLoadingSt
 
       {/* Selected stakeholder interaction history */}
       {selectedStakeholder && (
-        <div className="rounded-xl border border-border bg-card p-4 space-y-4">
+        <div ref={detailPanelRef} className="rounded-xl border border-border bg-card p-4 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <HealthDot health={healthMap.get(selectedStakeholder.id)?.overallHealth ?? 'red'} />

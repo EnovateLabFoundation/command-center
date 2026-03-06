@@ -20,7 +20,7 @@ import { useAuthStore } from '@/stores/authStore';
 ───────────────────────────────────────────── */
 
 export type StakeholderAlignment = 'hostile' | 'neutral' | 'supportive' | 'champion';
-export type StakeholderCategory  = 'government' | 'media' | 'civil_society' | 'business' | 'traditional';
+export type StakeholderCategory  = 'government' | 'media' | 'civil_society' | 'business' | 'traditional' | 'international' | 'political_party';
 export type StrategicPriority    = 'critical' | 'high' | 'medium' | 'low';
 
 export const ALIGNMENT_LABELS: Record<StakeholderAlignment, string> = {
@@ -31,11 +31,13 @@ export const ALIGNMENT_LABELS: Record<StakeholderAlignment, string> = {
 };
 
 export const CATEGORY_LABELS: Record<StakeholderCategory, string> = {
-  government:    'Government',
-  media:         'Media',
-  civil_society: 'Civil Society',
-  business:      'Business',
-  traditional:   'Traditional',
+  government:     'Government',
+  media:          'Media',
+  civil_society:  'Civil Society',
+  business:       'Business',
+  traditional:    'Traditional',
+  international:  'International',
+  political_party:'Political Party',
 };
 
 export const PRIORITY_LABELS: Record<StrategicPriority, string> = {
@@ -74,6 +76,11 @@ export interface StakeholderRow extends Record<string, unknown> {
   risk_level:           string | null;
   lat:                  number | null;
   lng:                  number | null;
+  state:                string | null;
+  senatorial_district:  string | null;
+  geopolitical_zone:    string | null;
+  lga:                  string | null;
+  ward:                 string | null;
   strategic_notes:      string | null;
   engagement_strategy:  string | null;
   created_by:           string;

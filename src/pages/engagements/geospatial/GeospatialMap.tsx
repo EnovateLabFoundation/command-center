@@ -25,6 +25,11 @@ interface Stakeholder {
   lat: number | null;
   lng: number | null;
   strategic_priority: string | null;
+  state?: string | null;
+  senatorial_district?: string | null;
+  geopolitical_zone?: string | null;
+  lga?: string | null;
+  ward?: string | null;
 }
 
 interface GeospatialMapProps {
@@ -84,13 +89,16 @@ export default function GeospatialMap({ stakeholders, onMarkerClick, className }
               }}
             >
               <Popup>
-                <div className="text-xs space-y-1 min-w-[140px]">
+                <div className="text-xs space-y-1 min-w-[160px]">
                   <p className="font-semibold text-foreground">{s.name}</p>
                   {s.role_position && <p className="text-muted-foreground">{s.role_position}</p>}
                   <p className="capitalize">{s.category} · {s.alignment ?? 'neutral'}</p>
                   {s.influence_score != null && (
                     <p>Influence: <span className="font-mono">{s.influence_score}/10</span></p>
                   )}
+                  {s.state && <p className="text-muted-foreground">State: {s.state}</p>}
+                  {s.senatorial_district && <p className="text-muted-foreground">{s.senatorial_district}</p>}
+                  {s.geopolitical_zone && <p className="text-muted-foreground">{s.geopolitical_zone} Zone</p>}
                 </div>
               </Popup>
             </CircleMarker>

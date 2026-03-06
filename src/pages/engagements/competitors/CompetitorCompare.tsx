@@ -41,6 +41,18 @@ import type { CompetitorProfile } from '@/hooks/useCompetitors';
 interface CompetitorCompareProps {
   competitors: CompetitorProfile[];
   clientName?: string;
+  /** Optional client dimension scores for radar comparison */
+  clientScores?: {
+    mediaReach?: number;
+    socialEngagement?: number;
+    stakeholderSupport?: number;
+    narrativeConsistency?: number;
+    digitalGrowth?: number;
+    brandStrength?: number;
+    partyLeadershipFavour?: number;
+    financialCapacity?: number;
+    grassrootsInfluence?: number;
+  };
   onBack: () => void;
 }
 
@@ -64,6 +76,7 @@ const PIE_COLORS = [
 export default function CompetitorCompare({
   competitors,
   clientName = 'Client',
+  clientScores = {},
   onBack,
 }: CompetitorCompareProps) {
   const reportRef = useRef<HTMLDivElement>(null);
@@ -71,32 +84,52 @@ export default function CompetitorCompare({
   /* Limit to first 3 competitors for comparison */
   const selected = competitors.slice(0, 3);
 
-  /* ── Radar data (6 axes, normalised 0–10) ──────────────────── */
+  /* ── Radar data (9 axes, normalised 0–10) ──────────────────── */
   const radarData = useMemo(() => {
+    const clientDefaults = {
+      mediaReach: clientScores.mediaReach ?? 7,
+      socialEng: clientScores.socialEngagement ?? 7,
+      stakeholder: clientScores.stakeholderSupport ?? 7,
+      narrative: clientScores.narrativeConsistency ?? 7,
+      digitalGrowth: clientScores.digitalGrowth ?? 7,
+      brandStrength: clientScores.brandStrength ?? 7,
+      partyFavour: clientScores.partyLeadershipFavour ?? 7,
+      financialCap: clientScores.financialCapacity ?? 7,
+      grassroots: clientScores.grassrootsInfluence ?? 7,
+    };
+
     const axes = [
-      { key: 'mediaReach', label: 'Media Reach' },
-      { key: 'socialEng', label: 'Social Engagement' },
-      { key: 'stakeholder', label: 'Stakeholder Support' },
-      { key: 'narrative', label: 'Narrative Consistency' },
-      { key: 'digitalGrowth', label: 'Digital Growth' },
-      { key: 'brandStrength', label: 'Brand Strength' },
+      { key: 'mediaReach',   label: 'Media Reach' },
+      { key: 'socialEng',    label: 'Social Engagement' },
+      { key: 'stakeholder',  label: 'Stakeholder Support' },
+      { key: 'narrative',    label: 'Narrative Consistency' },
+      { key: 'digitalGrowth',label: 'Digital Growth' },
+      { key: 'brandStrength',label: 'Brand Strength' },
+      { key: 'partyFavour',  label: 'Party Leadership Favour' },
+      { key: 'financialCap', label: 'Financial Capacity' },
+      { key: 'grassroots',   label: 'Grassroots Influence' },
     ];
 
     return axes.map((axis) => {
-      const row: Record<string, any> = { axis: axis.label, [clientName]: 7 };
+      const clientVal = clientDefaults[axis.key as keyof typeof clientDefaults];
+      const row: Record<string, any> = { axis: axis.label, [clientName]: clientVal };
       selected.forEach((c) => {
+        const comp = c as any;
         const score =
-          axis.key === 'mediaReach' ? Math.min(10, (c.monthly_media_mentions ?? 0) / 10) :
-          axis.key === 'socialEng' ? Math.min(10, ((c.twitter_followers ?? 0) + (c.instagram_followers ?? 0)) / 50000) :
-          axis.key === 'stakeholder' ? (c.influence_score ?? 5) :
-          axis.key === 'narrative' ? Math.max(0, 5 + (c.avg_sentiment_score ?? 0) * 2) :
-          axis.key === 'digitalGrowth' ? Math.min(10, ((c.facebook_likes ?? 0) + (c.youtube_subscribers ?? 0)) / 20000) :
-          (c.threat_score ?? 5);
+          axis.key === 'mediaReach'   ? Math.min(10, (c.monthly_media_mentions ?? 0) / 10) :
+          axis.key === 'socialEng'    ? Math.min(10, ((c.twitter_followers ?? 0) + (c.instagram_followers ?? 0)) / 50000) :
+          axis.key === 'stakeholder'  ? (c.influence_score ?? 5) :
+          axis.key === 'narrative'    ? Math.max(0, 5 + (c.avg_sentiment_score ?? 0) * 2) :
+          axis.key === 'digitalGrowth'? Math.min(10, ((c.facebook_likes ?? 0) + (c.youtube_subscribers ?? 0)) / 20000) :
+          axis.key === 'brandStrength'? (c.threat_score ?? 5) :
+          axis.key === 'partyFavour'  ? (comp.favour_party_leadership ?? 5) :
+          axis.key === 'financialCap' ? (comp.financial_capacity ?? 5) :
+                                         (comp.grassroots_influence ?? 5);
         row[c.name] = +score.toFixed(1);
       });
       return row;
     });
-  }, [selected, clientName]);
+  }, [selected, clientName, clientScores]);
 
   /* ── Share of Voice (pie) ──────────────────────────────────── */
   const sovData = useMemo(() => {

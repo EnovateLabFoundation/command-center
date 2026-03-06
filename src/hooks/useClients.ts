@@ -15,14 +15,37 @@ import { useAuthStore } from '@/stores/authStore';
    Shared types
 ───────────────────────────────────────────── */
 
-export type ClientType = 'legislator' | 'governor' | 'ministry' | 'civic' | 'party';
+export type ClientType =
+  | 'president'
+  | 'senator'
+  | 'house_rep'
+  | 'governor'
+  | 'deputy_governor'
+  | 'house_assembly'
+  | 'lga_chairman'
+  | 'councillor'
+  | 'minister'
+  | 'commissioner'
+  | 'legislator'
+  | 'ministry'
+  | 'civic'
+  | 'party';
 
 export const CLIENT_TYPE_LABELS: Record<ClientType, string> = {
-  legislator: 'Aspiring Legislator',
-  governor:   'Aspiring Governor',
-  ministry:   'Government Ministry / Agency',
-  civic:      'Civic / Development Institution',
-  party:      'Political Party',
+  president:       'President of Nigeria',
+  senator:         'Senator (National Assembly)',
+  house_rep:       'Member, House of Representatives',
+  governor:        'Governor',
+  deputy_governor: 'Deputy Governor',
+  house_assembly:  'State House of Assembly Member',
+  lga_chairman:    'LGA Chairman',
+  councillor:      'Councillor',
+  minister:        'Federal Minister',
+  commissioner:    'State Commissioner',
+  legislator:      'Aspiring Legislator',
+  ministry:        'Government Ministry / Agency',
+  civic:           'Civic / Development Institution',
+  party:           'Political Party',
 };
 
 export interface ClientRow extends Record<string, unknown> {
