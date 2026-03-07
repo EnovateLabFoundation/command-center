@@ -148,8 +148,9 @@ export default function DiscoverySession() {
     }
     try {
       await lock();
-      // Mark Step 2 complete in onboarding tracker
-      updateStep(2, 'complete', {
+      // Mark Step 2 complete in onboarding tracker.
+      // Must be awaited so localStorage is flushed before navigate() fires.
+      await updateStep(2, 'complete', {
         discoverySessionId: session?.id,
         lockedAt:           new Date().toISOString(),
       });

@@ -98,6 +98,22 @@ export type StakeholderInsert = Omit<StakeholderRow,
 export type StakeholderUpdate = Partial<Omit<StakeholderInsert, 'engagement_id'>>;
 
 /* ─────────────────────────────────────────────
+   Helpers
+───────────────────────────────────────────── */
+
+/**
+ * Normalise stakeholder form values before DB insert/update.
+ * Empty-string date fields are coerced to null so PostgreSQL's date
+ * column does not reject them with an invalid-input error.
+ */
+function normaliseStakeholderValues<T extends Record<string, unknown>>(values: T): T {
+  return {
+    ...values,
+    last_contact_date: (values.last_contact_date === '' ? null : values.last_contact_date) as T['last_contact_date'],
+  };
+}
+
+/* ─────────────────────────────────────────────
    Query key factory
 ───────────────────────────────────────────── */
 
@@ -157,7 +173,7 @@ export function useAddStakeholder(engagementId: string) {
       const { data, error } = await supabase
         .from('stakeholders')
         .insert({
-          ...values,
+          ...normaliseStakeholderValues(values),
           engagement_id: engagementId,
           created_by:    user?.id ?? '',
           updated_by:    user?.id ?? '',
@@ -183,7 +199,7 @@ export function useUpdateStakeholder(engagementId: string) {
     mutationFn: async ({ id, ...values }: StakeholderUpdate & { id: string }) => {
       const { error } = await supabase
         .from('stakeholders')
-        .update({ ...values, updated_by: user?.id ?? '' })
+        .update({ ...normaliseStakeholderValues(values), updated_by: user?.id ?? '' })
         .eq('id', id);
       if (error) throw new Error(error.message);
     },

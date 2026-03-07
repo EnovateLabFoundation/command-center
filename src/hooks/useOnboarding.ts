@@ -215,11 +215,15 @@ export function useOnboarding(engagementId: string | undefined) {
         ...(blockedReason ? { blockedReason } : {}),
       };
 
-      setState((prev) => {
-        const next = { ...prev, [stepNumber]: stepState };
-        saveState(engagementId, next);
-        return next;
-      });
+      // Persist to localStorage synchronously NOW — before React's batched setState
+      // fires. This guarantees that a navigate() called immediately after
+      // updateStep() will find the updated state when the new page mounts and
+      // calls loadState(). (React 18 batches setState callbacks so the updater
+      // function may not run until after navigation occurs.)
+      const currentState = loadState(engagementId);
+      const next = { ...currentState, [stepNumber]: stepState };
+      saveState(engagementId, next);
+      setState(next);
 
       // Audit log — fire-and-forget
       if (newStatus === 'complete') {
